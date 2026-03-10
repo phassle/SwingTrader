@@ -55,6 +55,16 @@ For pull requests, include:
 - source notes for any new research
 - screenshots only if formatting or rendered output matters
 
+## Git Flow Policy
+- Always use git flow for all feature, bugfix, and release work.
+- Every change must be made on a feature branch (never directly on main).
+- Feature branches should be named descriptively, e.g. `feature/aspire-apphost`, `bugfix/telegram-notification`.
+- Pull requests must be created for all merges to main.
+- No branch should be deleted without explicit permission.
+- All commit messages and console output must be in English.
+- Code review is required before merging any branch.
+- Follow git flow for branch management, review, and release.
+
 ## Contributor Notes
 
 Before creating a new file, check whether the topic already exists in `research/`. Prefer extending the research map or adding a narrowly scoped companion file instead of duplicating coverage.
