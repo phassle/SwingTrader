@@ -14,6 +14,7 @@ Keep related additions in the correct subfolder and follow the existing numbered
 
 There is no build system or automated test suite in the repository today. Useful local validation commands:
 
+- `init . --ai codex` — initialize the workspace for Codex-based collaboration.
 - `find research -maxdepth 3 -type f | sort` — list the document set.
 - `rg -n "^#|^## " research` — inspect heading structure and consistency.
 - `markdownlint "**/*.md"` — run Markdown linting if `markdownlint` is installed locally.
