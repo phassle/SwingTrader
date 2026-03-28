@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SwingTrader Signal Scanner — Dashboard</title>
+<style>
+  :root {
+    --bg: #0d1117; --surface: #161b22; --surface2: #1c2129;
+    --border: #30363d; --text: #c9d1d9; --text-dim: #8b949e;
+    --accent: #58a6ff; --green: #3fb950; --yellow: #d29922;
+    --orange: #db6d28; --red: #f85149; --purple: #bc8cff;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    background: var(--bg); color: var(--text);
+    height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+  }
+
+  /* Header */
+  .header {
+    padding: 10px 20px; background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 16px; flex-shrink: 0;
+  }
+  .header h1 { font-size: 15px; font-weight: 600; }
+  .tab-bar { display: flex; gap: 4px; margin-left: auto; }
+  .tab {
+    font-size: 12px; padding: 5px 14px; border-radius: 6px;
+    border: 1px solid var(--border); background: transparent;
+    color: var(--text-dim); cursor: pointer; transition: all .15s;
+  }
+  .tab:hover { border-color: var(--accent); color: var(--accent); }
+  .tab.active { background: var(--accent); color: var(--bg); border-color: var(--accent); font-weight: 600; }
+
+  /* Layout */
+  .main { display: flex; flex: 1; overflow: hidden; }
+  .sidebar {
+    width: 260px; flex-shrink: 0; background: var(--surface);
+    border-right: 1px solid var(--border); overflow-y: auto; padding: 14px;
+  }
+  .content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .content-inner { flex: 1; overflow-y: auto; padding: 16px; }
+
+  /* Sidebar scan list */
+  .sidebar h3 {
+    font-size: 11px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: .5px; color: var(--text-dim); margin-bottom: 10px;
+  }
+  .scan-item {
+    padding: 8px 10px; border-radius: 6px; cursor: pointer;
+    margin-bottom: 4px; border: 1px solid transparent; transition: all .15s;
+  }
+  .scan-item:hover { background: var(--surface2); }
+  .scan-item.active { border-color: var(--accent); background: var(--surface2); }
+  .scan-item .date { font-size: 13px; font-weight: 600; }
+  .scan-item .meta { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+  .scan-item .badges { display: flex; gap: 4px; margin-top: 4px; flex-wrap: wrap; }
+  .badge {
+    font-size: 10px; padding: 1px 6px; border-radius: 3px; font-weight: 600;
+  }
+  .badge-buy { background: rgba(63,185,80,.15); color: var(--green); }
+  .badge-watch { background: rgba(210,153,34,.15); color: var(--yellow); }
+  .badge-win { background: rgba(63,185,80,.25); color: var(--green); }
+  .badge-loss { background: rgba(248,81,73,.2); color: var(--red); }
+
+  /* Stats cards */
+  .stats-row {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px; margin-bottom: 16px;
+  }
+  .stat-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 12px 14px;
+  }
+  .stat-card .label {
+    font-size: 11px; text-transform: uppercase; letter-spacing: .5px;
+    color: var(--text-dim); margin-bottom: 4px;
+  }
+  .stat-card .value {
+    font-size: 22px; font-weight: 700;
+    font-family: 'SF Mono', Monaco, monospace;
+  }
+  .stat-card .sub { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+
+  /* Table */
+  .scan-banner {
+    font-family: 'SF Mono', Monaco, monospace; font-size: 13px;
+    color: var(--text-dim); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 14px; margin-bottom: 12px;
+    background: var(--surface);
+  }
+  .scan-banner .title { font-size: 14px; color: var(--text); font-weight: 600; }
+  table {
+    width: 100%; border-collapse: collapse;
+    font-family: 'SF Mono', Monaco, monospace; font-size: 12.5px;
+  }
+  thead th {
+    text-align: left; padding: 7px 10px; font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: .5px; color: var(--text-dim);
+    border-bottom: 2px solid var(--border); position: sticky; top: 0;
+    background: var(--bg); z-index: 1; cursor: pointer; user-select: none;
+  }
+  thead th:hover { color: var(--accent); }
+  thead th.num { text-align: right; }
+  tbody td { padding: 6px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  tbody td.num { text-align: right; }
+  tbody tr { transition: background .1s; }
+  tbody tr:hover { background: var(--surface); }
+  tbody tr.selected { background: var(--surface2); }
+
+  .grade {
+    display: inline-block; padding: 1px 8px; border-radius: 4px;
+    font-weight: 700; font-size: 11px; text-align: center; min-width: 24px;
+  }
+  .grade-A { background: var(--green); color: #0d1117; }
+  .grade-B { background: #238636; color: #fff; }
+  .grade-C { background: var(--yellow); color: #0d1117; }
+  .grade-F { background: #484f58; color: var(--text-dim); }
+
+  .action-tag { font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 600; }
+  .action-BUY { background: rgba(63,185,80,.15); color: var(--green); }
+  .action-STRONG { background: rgba(63,185,80,.25); color: var(--green); }
+  .action-WATCHLIST { background: rgba(210,153,34,.15); color: var(--yellow); }
+  .action-SKIP { background: rgba(72,79,88,.3); color: var(--text-dim); }
+
+  .outcome-tag { font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 600; }
+  .outcome-target_hit { background: rgba(63,185,80,.2); color: var(--green); }
+  .outcome-stopped_out { background: rgba(248,81,73,.2); color: var(--red); }
+  .outcome-open { background: rgba(210,153,34,.1); color: var(--yellow); }
+  .outcome-none { color: var(--text-dim); }
+
+  .score-bar { display: inline-flex; align-items: center; gap: 4px; }
+  .score-bar .bar { width: 50px; height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .score-bar .bar-fill { height: 100%; border-radius: 3px; }
+
+  .pnl-pos { color: var(--green); }
+  .pnl-neg { color: var(--red); }
+  .pnl-flat { color: var(--text-dim); }
+
+  /* Detail panel */
+  .detail-panel {
+    border-top: 1px solid var(--border); background: var(--surface2);
+    padding: 16px; max-height: 38%; overflow-y: auto;
+  }
+  .detail-title {
+    font-size: 15px; font-weight: 600; margin-bottom: 12px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .cat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px,1fr)); gap: 8px; }
+  .cat-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 8px 12px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .cat-score {
+    font-size: 18px; font-weight: 700;
+    font-family: 'SF Mono', Monaco, monospace; min-width: 34px; text-align: center;
+  }
+  .cat-info h4 { font-size: 12px; font-weight: 600; margin-bottom: 1px; }
+  .cat-info p { font-size: 11px; color: var(--text-dim); }
+
+  /* Performance tab */
+  .perf-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .perf-section { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
+  .perf-section h3 { font-size: 13px; font-weight: 600; margin-bottom: 12px; }
+  .perf-row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 13px; }
+  .perf-row .k { color: var(--text-dim); }
+  .perf-row .v { font-family: 'SF Mono', Monaco, monospace; font-weight: 600; }
+  .grade-perf-bar {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 6px;
+  }
+  .grade-perf-bar .bar-bg {
+    flex: 1; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden;
+  }
+  .grade-perf-bar .bar-fill { height: 100%; border-radius: 4px; }
+
+  /* Prompt area */
+  .prompt-area {
+    flex-shrink: 0; border-top: 1px solid var(--border);
+    background: var(--surface); padding: 10px 16px;
+  }
+  .prompt-header {
+    display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;
+  }
+  .prompt-header span { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; color: var(--text-dim); }
+  .copy-btn {
+    font-size: 12px; padding: 4px 12px; border-radius: 6px;
+    border: 1px solid var(--border); background: var(--surface2);
+    color: var(--text); cursor: pointer; transition: all .15s;
+  }
+  .copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .copy-btn.copied { background: var(--green); color: #0d1117; border-color: var(--green); }
+  #prompt-output {
+    font-family: 'SF Mono', Monaco, monospace; font-size: 12px;
+    color: var(--text-dim); line-height: 1.5; max-height: 60px; overflow-y: auto;
+  }
+
+  .empty-state {
+    text-align: center; padding: 60px 20px; color: var(--text-dim);
+  }
+  .empty-state h2 { font-size: 18px; color: var(--text); margin-bottom: 8px; }
+  .empty-state code {
+    display: inline-block; margin-top: 12px; padding: 8px 16px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; font-size: 13px; color: var(--accent);
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>SwingTrader Dashboard</h1>
+  <div class="tab-bar">
+    <button class="tab active" onclick="switchTab('signals')">Signals</button>
+    <button class="tab" onclick="switchTab('performance')">Performance</button>
+  </div>
+</div>
+
+<div class="main">
+  <div class="sidebar">
+    <h3>Scan History</h3>
+    <div id="scan-list"></div>
+  </div>
+
+  <div class="content">
+    <div class="content-inner" id="content-inner"></div>
+    <div class="detail-panel" id="detail-panel" style="display:none;"></div>
+  </div>
+</div>
+
+<div class="prompt-area">
+  <div class="prompt-header">
+    <span>Generated Prompt</span>
+    <button class="copy-btn" id="copy-btn" onclick="copyPrompt()">Copy</button>
+  </div>
+  <div id="prompt-output">Select a scan to begin</div>
+</div>
+
+<script src="scans/scan-data.js"></script>
+<script>
+const CATEGORIES = [
+  { key:"trend_alignment", name:"Trend", max:3 },
+  { key:"level_quality", name:"Level", max:3 },
+  { key:"catalyst_quality", name:"Catalyst", max:3 },
+  { key:"volume", name:"Volume", max:2 },
+  { key:"liquidity", name:"Liquidity", max:2 },
+  { key:"market_sector", name:"Market/Sector", max:3 },
+  { key:"risk_reward", name:"R:R", max:2 },
+  { key:"timing", name:"Timing", max:2 },
+];
+
+let currentTab = "signals";
+let selectedScanIdx = 0;
+let selectedTicker = null;
+let sortCol = "score";
+let sortAsc = false;
+
+function scans() { return window.SCAN_HISTORY || []; }
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll(".tab").forEach(t => t.classList.toggle("active", t.textContent.toLowerCase() === tab));
+  selectedTicker = null;
+  render();
+}
+
+function selectScan(idx) {
+  selectedScanIdx = idx;
+  selectedTicker = null;
+  render();
+}
+
+function selectRow(ticker) {
+  selectedTicker = selectedTicker === ticker ? null : ticker;
+  renderDetail();
+  renderTable();
+  updatePrompt();
+}
+
+function sortBy(col) {
+  if (sortCol === col) sortAsc = !sortAsc;
+  else { sortCol = col; sortAsc = false; }
+  renderTable();
+}
+
+// --- Helpers ---
+function scoreColor(s) {
+  if (s >= 17) return "var(--green)";
+  if (s >= 13) return "#238636";
+  if (s >= 9) return "var(--yellow)";
+  return "var(--text-dim)";
+}
+function catColor(v, m) {
+  const p = v/m;
+  if (p >= .75) return "var(--green)";
+  if (p >= .5) return "var(--yellow)";
+  if (p > 0) return "var(--orange)";
+  return "var(--red)";
+}
+function outcomeLabel(o) {
+  if (o === "target_hit") return "Target Hit";
+  if (o === "stopped_out") return "Stopped Out";
+  if (o === "open") return "Open";
+  return "\u2014";
+}
+function fmtDate(iso) { return iso.slice(0,16).replace("T"," "); }
+function fmtDateShort(iso) { return iso.slice(0,10); }
+
+// --- Scan list ---
+function renderScanList() {
+  const el = document.getElementById("scan-list");
+  if (!scans().length) {
+    el.innerHTML = '<div class="empty-state"><p>No scans found</p></div>';
+    return;
+  }
+  el.innerHTML = scans().map((scan, i) => {
+    const sigs = scan.signals.filter(s => !s.disqualified);
+    const buys = sigs.filter(s => ["A","B"].includes(s.grade));
+    const watch = sigs.filter(s => s.grade === "C");
+    const wins = sigs.filter(s => s.outcome === "target_hit").length;
+    const losses = sigs.filter(s => s.outcome === "stopped_out").length;
+
+    let badges = "";
+    if (buys.length) badges += `<span class="badge badge-buy">${buys.length} buy</span>`;
+    if (watch.length) badges += `<span class="badge badge-watch">${watch.length} watch</span>`;
+    if (wins) badges += `<span class="badge badge-win">${wins}W</span>`;
+    if (losses) badges += `<span class="badge badge-loss">${losses}L</span>`;
+
+    return `<div class="scan-item ${i===selectedScanIdx?'active':''}" onclick="selectScan(${i})">
+      <div class="date">${fmtDate(scan.scan_date)}</div>
+      <div class="meta">${scan.tickers_scanned} tickers scanned</div>
+      <div class="badges">${badges}</div>
+    </div>`;
+  }).join("");
+}
+
+// --- Signals tab ---
+function renderSignals() {
+  const inner = document.getElementById("content-inner");
+  const scan = scans()[selectedScanIdx];
+  if (!scan) {
+    inner.innerHTML = `<div class="empty-state">
+      <h2>No scan data loaded</h2>
+      <p>Run the scanner to generate data:</p>
+      <code>PYTHONPATH=src python3 -m swingtrader</code>
+    </div>`;
+    return;
+  }
+
+  const sigs = scan.signals.filter(s => !s.disqualified);
+  const buys = sigs.filter(s => ["A","B"].includes(s.grade));
+  const watch = sigs.filter(s => s.grade === "C");
+  const wins = sigs.filter(s => s.outcome === "target_hit").length;
+  const losses = sigs.filter(s => s.outcome === "stopped_out").length;
+  const evaluated = sigs.filter(s => s.outcome && s.outcome !== "open").length;
+
+  let statsHtml = `<div class="stats-row">
+    <div class="stat-card">
+      <div class="label">Tickers Scanned</div>
+      <div class="value">${scan.tickers_scanned}</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Buy Signals</div>
+      <div class="value" style="color:var(--green)">${buys.length}</div>
+      <div class="sub">${buys.map(s=>s.ticker).join(", ") || "none"}</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Watchlist</div>
+      <div class="value" style="color:var(--yellow)">${watch.length}</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Outcomes</div>
+      <div class="value">${evaluated > 0 ? `<span style="color:var(--green)">${wins}W</span> / <span style="color:var(--red)">${losses}L</span>` : '<span style="color:var(--text-dim)">\u2014</span>'}</div>
+      ${evaluated > 0 ? `<div class="sub">${Math.round(wins/(wins+losses)*100)}% win rate</div>` : '<div class="sub">Not yet evaluated</div>'}
+    </div>
+  </div>`;
+
+  let bannerHtml = `<div class="scan-banner">
+    <div class="title">Scan: ${fmtDate(scan.scan_date)}</div>
+    <div>Top ${Math.min(10, sigs.length)} of ${sigs.length} scored signals</div>
+  </div>`;
+
+  inner.innerHTML = statsHtml + bannerHtml + '<table><thead><tr id="table-head"></tr></thead><tbody id="table-body"></tbody></table>';
+  renderTable();
+  renderDetail();
+}
+
+function renderTable() {
+  const scan = scans()[selectedScanIdx];
+  if (!scan) return;
+  const sigs = scan.signals.filter(s => !s.disqualified);
+  const hasOutcomes = sigs.some(s => s.outcome);
+
+  // Build header
+  const headEl = document.getElementById("table-head");
+  if (headEl) {
+    let cols = [
+      {k:"rank", l:"#", cls:"num"},
+      {k:"ticker", l:"Ticker"},
+      {k:"score", l:"Score", cls:"num"},
+      {k:"grade", l:"Grade"},
+      {k:"setup", l:"Setup"},
+      {k:"entry", l:"Entry", cls:"num"},
+      {k:"stop", l:"Stop", cls:"num"},
+      {k:"target", l:"Target", cls:"num"},
+      {k:"action", l:"Action"},
+    ];
+    if (hasOutcomes) cols.push({k:"outcome", l:"Outcome"});
+    headEl.innerHTML = cols.map(c =>
+      `<th class="${c.cls||''}" onclick="sortBy('${c.k}')">${c.l}${sortCol===c.k?(sortAsc?' \u25B2':' \u25BC'):''}</th>`
+    ).join("");
+  }
+
+  // Sort
+  let sorted = [...sigs];
+  const dir = sortAsc ? 1 : -1;
+  sorted.sort((a,b) => {
+    switch(sortCol) {
+      case "ticker": return a.ticker.localeCompare(b.ticker) * dir;
+      case "score": return (a.score - b.score) * dir;
+      case "grade": return ("ABCF".indexOf(a.grade) - "ABCF".indexOf(b.grade)) * dir;
+      case "setup": return (a.setup_type||"").localeCompare(b.setup_type||"") * dir;
+      case "entry": return (a.entry - b.entry) * dir;
+      case "stop": return (a.stop - b.stop) * dir;
+      case "target": return (a.target - b.target) * dir;
+      default: return (a.score - b.score) * -1; // default desc
+    }
+  });
+
+  const top = sorted.slice(0, 20);
+  const tbody = document.getElementById("table-body");
+  if (!tbody) return;
+
+  tbody.innerHTML = top.map((s, i) => {
+    const actionWord = s.grade === "A" ? "STRONG" : s.grade === "B" ? "BUY" : s.grade === "C" ? "WATCHLIST" : "SKIP";
+    const actionFull = s.grade === "A" ? "STRONG BUY" : s.grade === "B" ? "BUY" : s.grade === "C" ? "WATCHLIST" : "SKIP";
+    const actionable = ["A","B"].includes(s.grade);
+    const sel = s.ticker === selectedTicker;
+
+    let outcomeCell = "";
+    if (hasOutcomes) {
+      const oc = s.outcome || "none";
+      outcomeCell = `<td><span class="outcome-tag outcome-${oc}">${outcomeLabel(oc)}</span></td>`;
+    }
+
+    return `<tr class="${sel?'selected':''}" onclick="selectRow('${s.ticker}')"
+        style="${actionable ? 'border-left:3px solid var(--green);' : ''}">
+      <td class="num">${i+1}</td>
+      <td style="font-weight:600;${actionable?'':'color:var(--text-dim)'}">${s.ticker}</td>
+      <td class="num"><div class="score-bar"><span>${s.score}</span><div class="bar"><div class="bar-fill" style="width:${s.score/20*100}%;background:${scoreColor(s.score)}"></div></div></div></td>
+      <td><span class="grade grade-${s.grade}">${s.grade}</span></td>
+      <td>${s.setup_type || "\u2014"}</td>
+      <td class="num">${s.entry.toFixed(2)}</td>
+      <td class="num" style="color:var(--red)">${s.stop.toFixed(2)}</td>
+      <td class="num" style="color:var(--green)">${s.target.toFixed(2)}</td>
+      <td><span class="action-tag action-${actionWord}">${actionFull}</span></td>
+      ${outcomeCell}
+    </tr>`;
+  }).join("");
+}
+
+function renderDetail() {
+  const panel = document.getElementById("detail-panel");
+  if (!selectedTicker) { panel.style.display = "none"; return; }
+  const scan = scans()[selectedScanIdx];
+  if (!scan) { panel.style.display = "none"; return; }
+  const s = scan.signals.find(x => x.ticker === selectedTicker);
+  if (!s) { panel.style.display = "none"; return; }
+
+  panel.style.display = "block";
+  const bd = s.breakdown;
+
+  let outcomeHtml = "";
+  if (s.outcome) {
+    const oc = s.outcome;
+    outcomeHtml = `<span class="outcome-tag outcome-${oc}" style="font-size:12px;">${outcomeLabel(oc)}</span>`;
+  }
+
+  panel.innerHTML = `
+    <div class="detail-title">
+      <span style="font-size:16px">${s.ticker}</span>
+      <span class="grade grade-${s.grade}" style="font-size:13px">${s.grade}-tier</span>
+      <span style="font-family:monospace;color:${scoreColor(s.score)};font-size:14px">${s.score}/20</span>
+      ${outcomeHtml}
+    </div>
+    <div class="cat-grid">
+      ${CATEGORIES.map((cat, idx) => {
+        const val = bd[cat.key] ?? 0;
+        const note = (s.notes && s.notes[idx]) || "";
+        const detail = note.includes(":") ? note.split(":").slice(1).join(":").trim() : note;
+        return `<div class="cat-card">
+          <div class="cat-score" style="color:${catColor(val, cat.max)}">${val}/${cat.max}</div>
+          <div class="cat-info"><h4>${cat.name}</h4><p>${detail}</p></div>
+        </div>`;
+      }).join("")}
+    </div>`;
+}
+
+// --- Performance tab ---
+function renderPerformance() {
+  const inner = document.getElementById("content-inner");
+  const allSignals = scans().flatMap(scan =>
+    scan.signals.filter(s => !s.disqualified).map(s => ({...s, scanDate: scan.scan_date}))
+  );
+
+  const resolved = allSignals.filter(s => s.outcome === "target_hit" || s.outcome === "stopped_out");
+  const wins = resolved.filter(s => s.outcome === "target_hit");
+  const losses = resolved.filter(s => s.outcome === "stopped_out");
+  const winRate = resolved.length > 0 ? Math.round(wins.length / resolved.length * 100) : 0;
+
+  // By grade
+  const gradeStats = {};
+  for (const g of ["A","B","C","F"]) {
+    const gs = resolved.filter(s => s.grade === g);
+    const gw = gs.filter(s => s.outcome === "target_hit").length;
+    gradeStats[g] = { total: gs.length, wins: gw, rate: gs.length > 0 ? Math.round(gw/gs.length*100) : 0 };
+  }
+
+  // By setup
+  const setupTypes = [...new Set(resolved.map(s => s.setup_type).filter(Boolean))];
+  const setupStats = {};
+  for (const st of setupTypes) {
+    const ss = resolved.filter(s => s.setup_type === st);
+    const sw = ss.filter(s => s.outcome === "target_hit").length;
+    setupStats[st] = { total: ss.length, wins: sw, rate: ss.length > 0 ? Math.round(sw/ss.length*100) : 0 };
+  }
+
+  // Total scans
+  const totalScans = scans().length;
+  const totalSignals = allSignals.length;
+  const actionable = allSignals.filter(s => ["A","B"].includes(s.grade)).length;
+
+  if (resolved.length === 0) {
+    inner.innerHTML = `<div class="empty-state">
+      <h2>No evaluated signals yet</h2>
+      <p>Run evaluate to check past signals against current prices:</p>
+      <code>PYTHONPATH=src python3 -m swingtrader --evaluate</code>
+    </div>`;
+    return;
+  }
+
+  inner.innerHTML = `
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="label">Total Scans</div>
+        <div class="value">${totalScans}</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Win Rate</div>
+        <div class="value" style="color:${winRate >= 50 ? 'var(--green)' : 'var(--red)'}">${winRate}%</div>
+        <div class="sub">${wins.length}W / ${losses.length}L of ${resolved.length} resolved</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Total Signals</div>
+        <div class="value">${totalSignals}</div>
+        <div class="sub">${actionable} actionable (A/B)</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Unresolved</div>
+        <div class="value" style="color:var(--yellow)">${allSignals.filter(s=>!s.outcome || s.outcome==="open").length}</div>
+      </div>
+    </div>
+
+    <div class="perf-grid">
+      <div class="perf-section">
+        <h3>Win Rate by Grade</h3>
+        ${["A","B","C","F"].map(g => {
+          const gs = gradeStats[g];
+          if (!gs.total) return `<div class="grade-perf-bar">
+            <span class="grade grade-${g}" style="width:28px">${g}</span>
+            <div class="bar-bg"><div class="bar-fill" style="width:0%"></div></div>
+            <span style="font-size:12px;color:var(--text-dim);min-width:50px">no data</span>
+          </div>`;
+          const col = gs.rate >= 60 ? "var(--green)" : gs.rate >= 40 ? "var(--yellow)" : "var(--red)";
+          return `<div class="grade-perf-bar">
+            <span class="grade grade-${g}" style="width:28px">${g}</span>
+            <div class="bar-bg"><div class="bar-fill" style="width:${gs.rate}%;background:${col}"></div></div>
+            <span style="font-size:12px;font-family:monospace;min-width:80px;text-align:right">${gs.rate}% (${gs.wins}/${gs.total})</span>
+          </div>`;
+        }).join("")}
+      </div>
+
+      <div class="perf-section">
+        <h3>Win Rate by Setup</h3>
+        ${setupTypes.length === 0 ? '<p style="color:var(--text-dim);font-size:13px">No data</p>' :
+          setupTypes.map(st => {
+            const ss = setupStats[st];
+            const col = ss.rate >= 60 ? "var(--green)" : ss.rate >= 40 ? "var(--yellow)" : "var(--red)";
+            return `<div class="grade-perf-bar">
+              <span style="font-size:12px;min-width:80px">${st}</span>
+              <div class="bar-bg"><div class="bar-fill" style="width:${ss.rate}%;background:${col}"></div></div>
+              <span style="font-size:12px;font-family:monospace;min-width:80px;text-align:right">${ss.rate}% (${ss.wins}/${ss.total})</span>
+            </div>`;
+          }).join("")}
+      </div>
+    </div>
+
+    <div class="perf-section" style="margin-top:16px">
+      <h3>Resolved Signals Timeline</h3>
+      <table>
+        <thead><tr>
+          <th>Date</th><th>Ticker</th><th class="num">Score</th><th>Grade</th>
+          <th class="num">Entry</th><th class="num">Target</th><th class="num">Stop</th><th>Outcome</th>
+        </tr></thead>
+        <tbody>
+          ${resolved.slice(0, 30).map(s => `<tr>
+            <td>${fmtDateShort(s.scanDate)}</td>
+            <td style="font-weight:600">${s.ticker}</td>
+            <td class="num">${s.score}</td>
+            <td><span class="grade grade-${s.grade}">${s.grade}</span></td>
+            <td class="num">${s.entry.toFixed(2)}</td>
+            <td class="num" style="color:var(--green)">${s.target.toFixed(2)}</td>
+            <td class="num" style="color:var(--red)">${s.stop.toFixed(2)}</td>
+            <td><span class="outcome-tag outcome-${s.outcome}">${outcomeLabel(s.outcome)}</span></td>
+          </tr>`).join("")}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+// --- Prompt ---
+function updatePrompt() {
+  const el = document.getElementById("prompt-output");
+  const scan = scans()[selectedScanIdx];
+  if (!scan) { el.textContent = "No scan loaded."; return; }
+
+  const sigs = scan.signals.filter(s => !s.disqualified);
+  const buys = sigs.filter(s => ["A","B"].includes(s.grade));
+  const watch = sigs.filter(s => s.grade === "C");
+  const wins = sigs.filter(s => s.outcome === "target_hit");
+  const losses = sigs.filter(s => s.outcome === "stopped_out");
+
+  let parts = [`SwingTrader scan from ${fmtDateShort(scan.scan_date)}: ${scan.tickers_scanned} tickers scanned.`];
+
+  if (buys.length) parts.push(`Buy signals: ${buys.map(s=>`${s.ticker}(${s.grade},${s.score}/20)`).join(", ")}.`);
+  if (watch.length) parts.push(`Watchlist: ${watch.map(s=>`${s.ticker}(${s.score}/20)`).join(", ")}.`);
+
+  if (wins.length + losses.length > 0) {
+    parts.push(`Outcomes: ${wins.length}W/${losses.length}L (${Math.round(wins.length/(wins.length+losses.length)*100)}% win rate).`);
+  }
+
+  if (selectedTicker) {
+    const s = scan.signals.find(x => x.ticker === selectedTicker);
+    if (s) {
+      parts.push(`\nDetail for ${s.ticker} (${s.grade}-tier, ${s.score}/20): ${(s.notes||[]).join("; ")}. Entry ${s.entry.toFixed(2)}, stop ${s.stop.toFixed(2)}, target ${s.target.toFixed(2)}.`);
+      if (s.outcome) parts.push(`Outcome: ${outcomeLabel(s.outcome)}.`);
+    }
+  }
+
+  el.textContent = parts.join(" ");
+}
+
+function copyPrompt() {
+  navigator.clipboard.writeText(document.getElementById("prompt-output").textContent).then(() => {
+    const btn = document.getElementById("copy-btn");
+    btn.textContent = "Copied!"; btn.classList.add("copied");
+    setTimeout(() => { btn.textContent = "Copy"; btn.classList.remove("copied"); }, 1500);
+  });
+}
+
+// --- Main render ---
+function render() {
+  renderScanList();
+  document.getElementById("detail-panel").style.display = "none";
+  if (currentTab === "signals") renderSignals();
+  else renderPerformance();
+  updatePrompt();
+}
+
+// Init
+if (!scans().length) {
+  document.getElementById("content-inner").innerHTML = `<div class="empty-state">
+    <h2>No scan data found</h2>
+    <p>Run the scanner to generate data for the dashboard:</p>
+    <code>PYTHONPATH=src python3 -m swingtrader</code>
+  </div>`;
+  document.getElementById("scan-list").innerHTML = '<p style="color:var(--text-dim);font-size:12px;padding:8px">No scans yet</p>';
+} else {
+  render();
+}
+</script>
+</body>
+</html>

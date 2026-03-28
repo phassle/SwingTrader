@@ -1,0 +1,23 @@
+{
+  "skill_name": "tws-paper-trading",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Jag har fått en signal från SwingTrader att köpa VOLV-B.ST med score 17, entry 265.50, stop-loss 258.00 och target 280.00. Kan du hjälpa mig skriva Python-kod som skickar denna order till mitt paper trading-konto?",
+      "expected_output": "Python-kod som konverterar VOLV-B.ST till IBKR-format, skapar en Stock-kontrakt för SFB/SEK, och placerar en bracket order med entry, stop-loss och take-profit",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "Jag vill komma igång med att testa mina trading-signaler mot en riktig mäklare men jag vet inte var jag ska börja. Jag har SwingTrader-projektet med signaler för svenska Large Cap-aktier. Vad behöver jag göra steg för steg?",
+      "expected_output": "En tydlig steg-för-steg-guide som börjar med att skapa IBKR free trial, installera TWS, konfigurera API-port 7497, installera ib_async, och testa en enkel connection",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "Jag har kopplat SwingTrader till IBKR paper trading och har kört i en vecka. Nu vill jag se hur det gått — kan du skriva kod som hämtar alla mina positioner, visar P&L per aktie, och ger mig en sammanfattning av hur portföljen presterat?",
+      "expected_output": "Python-kod som ansluter till TWS, hämtar positions(), accountSummary(), och pnlSingle(), och presenterar resultaten i en läsbar sammanfattning",
+      "files": []
+    }
+  ]
+}

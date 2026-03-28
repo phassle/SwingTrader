@@ -14,6 +14,7 @@ Keep related additions in the correct subfolder and follow the existing numbered
 
 There is no build system or automated test suite in the repository today. Useful local validation commands:
 
+- `init . --ai codex` — initialize the workspace for Codex-based collaboration.
 - `find research -maxdepth 3 -type f | sort` — list the document set.
 - `rg -n "^#|^## " research` — inspect heading structure and consistency.
 - `markdownlint "**/*.md"` — run Markdown linting if `markdownlint` is installed locally.
@@ -53,6 +54,16 @@ For pull requests, include:
 - affected files or sections
 - source notes for any new research
 - screenshots only if formatting or rendered output matters
+
+## Git Flow Policy
+- Always use git flow for all feature, bugfix, and release work.
+- Every change must be made on a feature branch (never directly on main).
+- Feature branches should be named descriptively, e.g. `feature/aspire-apphost`, `bugfix/telegram-notification`.
+- Pull requests must be created for all merges to main.
+- No branch should be deleted without explicit permission.
+- All commit messages and console output must be in English.
+- Code review is required before merging any branch.
+- Follow git flow for branch management, review, and release.
 
 ## Contributor Notes
 

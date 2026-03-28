@@ -1,50 +1,49 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+# SwingTrader Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Signal Integrity Above All
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+Every trading signal must be grounded in verified, reproducible analysis. Minimum 30-trade backtest required before any strategy is deployed. No look-ahead bias permitted in any indicator or scoring logic. All scoring criteria must be transparent — every point in the 0–20 composite scale must trace to a documented rule.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+### II. Defensive Risk Management
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+Risk is the only variable we fully control. ATR-based stop-losses are mandatory on every signal. Risk per trade is capped at 1–2% of portfolio value. Portfolio heat (total open risk) must respect defined limits. Drawdown circuit breakers must halt new signals when cumulative losses exceed thresholds. Position sizing is calculated, never discretionary.
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+### III. Clean Python, Tested Thoroughly
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+All code targets Python 3.11+ with type hints throughout. Linting and formatting enforced via `ruff` — no exceptions. Tests written with `pytest` using synthetic data fixtures to ensure deterministic, repeatable results. Code must be readable, modular, and independently testable per component.
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+### IV. Consistent Telegram UX
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+Signals delivered via Telegram follow a standardized format: ticker, score, direction, entry zone, stop-loss, target, position size, and risk/reward ratio. Daily summaries aggregate the top signals. Priority-based routing ensures high-scoring signals are highlighted. The user experience must be predictable — a trader should know exactly where to look in every message.
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+### V. Performance Within Bounds
+
+A full scan of ~90 Nasdaq Stockholm Large Cap tickers must complete in under 30 seconds. Faults are isolated per ticker — one bad data feed must not halt the entire scan. Structured logging (not print statements) is required for all runtime output. Monitoring via Healthchecks.io ensures uptime visibility.
+
+## Technology Stack
+
+- **Language**: Python 3.11+
+- **Linting/Formatting**: `ruff`
+- **Testing**: `pytest` with synthetic data fixtures
+- **Signal Delivery**: Telegram Bot API
+- **Monitoring**: Healthchecks.io
+- **Target Market**: Nasdaq Stockholm Large Cap (~90 `.ST` tickers)
+- **Account Assumption**: ISK (Investeringssparkonto)
+- **Version Control**: Git flow with feature branches
+
+## Development Workflow
+
+- All development happens on feature branches — never directly on `main`.
+- Pull requests are required for all merges to `main`.
+- Code review is required before merging.
+- Commit messages and console output must be in English.
+- Agent-specific setup files (`.specify/`) are kept isolated per worktree.
+- Shared specs and source code are merged through normal PR review.
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+This constitution supersedes all other development practices in the SwingTrader project. Any amendments require documentation of the change, rationale, and a migration plan if existing code or processes are affected. All pull requests and code reviews must verify compliance with these principles.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+**Version**: 1.0.0 | **Ratified**: 2026-03-28 | **Last Amended**: 2026-03-28

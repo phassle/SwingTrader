@@ -33,48 +33,65 @@ To avoid collisions, these notes focus on topics that were not explicitly assign
 - `25-regime-to-strategy-mapping.md`
 - `26-latest-research-update-and-evidence-review.md`
 - `27-swedish-market-adaptation.md`
+- `28-trading-psychology-and-behavioral-discipline.md` (2026-03-10)
+- `29-position-scaling-and-pyramiding.md` (2026-03-10)
+- `30-sector-rotation-and-economic-cycles.md` (2026-03-10)
+- `31-gap-trading-strategies.md` (2026-03-10)
+- `32-multi-timeframe-analysis.md` (2026-03-10)
 
 ## Suggested cross-links for other agents
 
 - `01-swing-trading-fundamentals.md`
   Add the current U.S. pattern day trader threshold, T+1 settlement, and cash-vs-margin account tradeoffs.
+  Cross-link to `28-trading-psychology-and-behavioral-discipline.md` for psychological foundations.
 
 - `05-risk-management.md`
   Pull in the execution notes on stop orders, gap risk, after-hours liquidity, and circuit breakers.
+  Cross-link to `28-trading-psychology-and-behavioral-discipline.md` for emotional risk management.
+  Cross-link to `29-position-scaling-and-pyramiding.md` for advanced position management.
+  Cross-link to `31-gap-trading-strategies.md` for gap risk management specifics.
 
 - `07-backtesting-and-performance.md`
   Pull in the evidence notes on momentum, reversal, catalyst drift, and implementation-cost drag.
 
 - `08-market-structure-and-conditions.md`
   Pull in the sections on volatility halts, auction behavior, and overnight/event risk.
+  Cross-link to `30-sector-rotation-and-economic-cycles.md` for economic cycle context.
 
 - `03-chart-patterns.md`
   Link to `11-candlestick-interpretation.md` for candle anatomy, context, wick/body reading, and confirmation rules.
   Link to `12-candlestick-examples-and-scenarios.md` for concrete swing-trading examples and decision rules.
+  Cross-link to `32-multi-timeframe-analysis.md` for pattern confirmation across timeframes.
 
 - `04-swing-trading-strategies.md`
   Cross-link to `21-catalyst-and-event-playbook.md`, `23-setup-quality-scoring.md`, and `25-regime-to-strategy-mapping.md`.
-
-- `05-risk-management.md`
-  Cross-link to `24-execution-and-slippage-playbook.md` for order-type choice, extended-hours risk, and gap execution logic.
+  Cross-link to `29-position-scaling-and-pyramiding.md` for position management within strategies.
+  Cross-link to `30-sector-rotation-and-economic-cycles.md` for sector-based strategy selection.
+  Cross-link to `32-multi-timeframe-analysis.md` for setup identification framework.
 
 - `06-apis-and-technology.md`
   Cross-link to `21-catalyst-and-event-playbook.md` and `22-watchlist-and-universe-selection.md` for the data objects an app should track.
+  Cross-link to `30-sector-rotation-and-economic-cycles.md` for sector data requirements.
 
 - `16-stock-screening-playbook.md`
   Cross-link to `22-watchlist-and-universe-selection.md` so the scanner operates on a defined universe instead of the whole market.
+  Cross-link to `30-sector-rotation-and-economic-cycles.md` for sector-filtered screening.
 
 - `18-correlation-and-portfolio-construction.md`
   Cross-link to `25-regime-to-strategy-mapping.md` where strategy mix should change with regime.
-
-- `03-chart-patterns.md`
-  Cross-link to `26-latest-research-update-and-evidence-review.md` for recent evidence on technical patterns and a caution against over-reading standalone pattern statistics.
-
-- `08-market-structure-and-conditions.md`
-  Cross-link to `26-latest-research-update-and-evidence-review.md` for updated seasonality and sentiment evidence.
+  Cross-link to `30-sector-rotation-and-economic-cycles.md` for sector diversification and correlation.
 
 - `13-trading-plan-and-daily-routine.md`
   Cross-link to `26-latest-research-update-and-evidence-review.md` for the canonical order-handling recommendation based on official SEC/Investor.gov guidance.
+  Cross-link to `28-trading-psychology-and-behavioral-discipline.md` for daily routines and psychological preparation.
+
+- `14-trade-management.md`
+  Cross-link to `29-position-scaling-and-pyramiding.md` for scaling in/out techniques.
+  Cross-link to `31-gap-trading-strategies.md` for managing positions through gaps.
+  Cross-link to `32-multi-timeframe-analysis.md` for stop placement and trade management frameworks.
+
+- `17-trading-journal-framework.md`
+  Cross-link to `28-trading-psychology-and-behavioral-discipline.md` for psychological journaling components.
 
 ## Scope assumptions
 
@@ -163,6 +180,67 @@ To avoid collisions, these notes focus on topics that were not explicitly assign
 
 - Investor.gov, "Extended-Hours Trading: Investor Bulletin"
   https://www.investor.gov/introduction-investing/general-resources/news-alerts/alerts-bulletins/investor-bulletins-42
+
+### Trading psychology and behavioral finance
+
+- Trading Psychology: Mind Over Market, Faster Capital
+  https://fastercapital.com/content/Trading-Psychology--Mind-Over-Market--The-Psychology-of-Swing-Trading.html
+
+- Trading Psychology: Control Emotions for Better Trades, eVest Blog
+  https://www.evest.blog/trading-blog/trading-psychology/
+
+- Behavioral Finance / Psychology Trading Articles, TradingHabits
+  https://www.tradinghabits.com/articles/behavioral-finance
+
+- Swing Trading Psychology Mastery, Traders Mastermind
+  https://tradersmastermind.com/swing-trading-psychology-mastery/
+
+- Market Psychology in Swing Trading, Disfold Blog
+  https://blog.disfold.com/market-psychology-swing-trading/
+
+### Position management and pyramiding
+
+- Pyramiding Strategies: Scaling Into Trades To Boost Returns, LuxAlgo
+  https://www.luxalgo.com/blog/pyramiding-strategies-scaling-into-trades-to-boost-returns/
+
+- The Ultimate Guide to Pyramiding in Trading, QuantStrategy
+  https://quantstrategy.io/blog/the-ultimate-guide-to-pyramiding-in-trading-how-to-scale/
+
+- Mastering Position Sizing: Advanced Strategies, QuantStrategy
+  https://quantstrategy.io/blog/mastering-position-sizing-advanced-strategies-for-scaling/
+
+### Sector rotation and economic cycles
+
+- Sector Rotation Strategy: Complete Guide, Market Gauge
+  https://marketgauge.com/resources/sector-rotation/
+
+- Sector Rotation Strategy: How to Time Market Cycles, One Portfolio
+  https://oneportfolio.io/en/blog/sector-rotation-strategy-guide/
+
+- Sector Rotation Analysis for Swing Traders, OpenSwingTrading
+  https://www.openswingtrading.com/blog/sector-rotation-analysis-how-it-works-for-swing-traders
+
+### Gap trading
+
+- Overnight Gap Trading Strategies, BluSky Blog
+  https://blog.blusky.pro/blusky-blog/overnight-gap-trading-strategies
+
+- The Complete Gap Trading Strategy Guide, Mind Math Money
+  https://www.mindmathmoney.com/articles/the-complete-gap-trading-strategy-guide-how-to-identify-and-trade-price-gaps-like-a-professional
+
+- Weekend Risk Management, Volatility Box
+  https://volatilitybox.com/docs/managing-overnight-weekend-risk/
+
+### Multi-timeframe analysis
+
+- How To Perform A Multi TimeFrame Analysis, Tradeciety
+  https://tradeciety.com/how-to-perform-a-multiple-time-frame-analysis
+
+- Multi Timeframe Analysis Trading Strategy, Mind Math Money
+  https://www.mindmathmoney.com/articles/multi-timeframe-analysis-trading-strategy-the-complete-guide-to-trading-multiple-timeframes
+
+- The Essential Guide To Multi-Timeframe Analysis, TradingWithRayner
+  https://www.tradingwithrayner.com/multi-timeframe-analysis/
 
 ### Practitioner references used only for implementation context
 
