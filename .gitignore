@@ -1,2 +1,20 @@
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+*.egg-info/
+dist/
+build/
+
+# Runtime scan data (auto-generated)
+scans/scan_*.json
+scans/scan-data.js
+scans/logs/
+
+# OS
 .DS_Store
-.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
