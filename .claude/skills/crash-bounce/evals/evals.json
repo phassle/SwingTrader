@@ -1,0 +1,47 @@
+{
+  "skill_name": "crash-bounce",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "ACME Corp ($ACME) dropped 48% yesterday after missing earnings - revenue was $40M vs $55M expected. Stock closed at $1.20, volume was 2.3M shares. It's a biotech with $80M cash on hand. Should I trade this tomorrow? Walk me through exactly what I should do.",
+      "expected_output": "Classify as Type E (earnings miss), provide specific entry/exit plan with prices, calculate position size, mention spread check at 10:00 not 09:35, warn about slippage, and include the full pre-entry checklist.",
+      "assertions": [
+        {"text": "Classifies drop as Type E (earnings miss)", "type": "contains_concept"},
+        {"text": "Entry window is 10:00-10:30 ET, NOT at market open (09:30-09:35)", "type": "contains_concept"},
+        {"text": "Mentions checking bid-ask spread before entry (< 2%)", "type": "contains_concept"},
+        {"text": "Stop loss is approximately -1.5% from entry, not -0.5%", "type": "contains_concept"},
+        {"text": "Take profit is approximately +3% from entry", "type": "contains_concept"},
+        {"text": "Calculates or mentions 1% fixed risk position sizing", "type": "contains_concept"},
+        {"text": "Mentions closing by 15:30 if neither SL nor TP hits", "type": "contains_concept"},
+        {"text": "Warns about slippage on post-crash stocks", "type": "contains_concept"}
+      ],
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "I've been running a crash-bounce strategy for 3 months with 65 trades backtested. My buddy says I should use Kelly criterion at 1/4 to size positions since the backtest shows 44.6% winrate and 4:1 R:R. I have a $25k account. What do you think?",
+      "expected_output": "Should strongly warn against Kelly on 65 trades, explain the confidence interval problem, recommend fixed 1% risk instead, show the math on why 65 trades isn't enough for Kelly, and mention the 200+ trade threshold.",
+      "assertions": [
+        {"text": "Warns against using Kelly criterion with only 65 trades", "type": "contains_concept"},
+        {"text": "Mentions confidence interval or standard error on winrate with 65 trades", "type": "contains_concept"},
+        {"text": "Recommends fixed 1% risk per trade instead of Kelly", "type": "contains_concept"},
+        {"text": "Mentions needing 200+ trades before considering Kelly", "type": "contains_concept"},
+        {"text": "Explains that 65 trades has approximately ±12pp confidence interval on winrate", "type": "contains_concept"}
+      ],
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "Two stocks crashed today. Stock A ($NOVA) dropped 55% after the SEC announced an investigation into accounting irregularities. Stock B ($ZETA) dropped 45% after a big block trade liquidation - no news, just a hedge fund apparently unwinding. Both have 800k+ volume. Which one should I trade tomorrow?",
+      "expected_output": "Should clearly identify Stock A as Type F (fraud/regulatory) and reject it, identify Stock B as Type T (technical/mechanical) and recommend it as an ideal candidate, explain why the distinction matters.",
+      "assertions": [
+        {"text": "Classifies Stock A (SEC investigation) as Type F (fraud/regulatory)", "type": "contains_concept"},
+        {"text": "Explicitly says DO NOT trade Stock A / reject / skip", "type": "contains_concept"},
+        {"text": "Classifies Stock B (block liquidation) as Type T (technical/mechanical)", "type": "contains_concept"},
+        {"text": "Recommends trading Stock B as a good or ideal candidate", "type": "contains_concept"},
+        {"text": "Explains that technical/mechanical drops have better bounce profile because no fundamental change", "type": "contains_concept"}
+      ],
+      "files": []
+    }
+  ]
+}

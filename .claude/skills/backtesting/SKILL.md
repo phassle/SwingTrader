@@ -21,11 +21,13 @@ tags: [backtesting, performance-metrics, validation, overfitting, walk-forward-a
 
 ## 2. Data Split: IS / OOS / Holdout
 
-| Segment | Allocation | Purpose |
-|---------|-----------|---------|
-| **In-Sample (IS)** | 50-70% | Develop & tune strategy |
-| **Out-of-Sample (OOS)** | 20-30% | Validate on unseen data |
-| **Holdout / Final** | 10-20% | One-time confirmation before live |
+| Segment | Allocation | Purpose | Audit analogy |
+|---------|-----------|---------|---------------|
+| **In-Sample (IS)** | 50-70% | Develop & tune strategy | Design effectiveness — does the control work on paper? |
+| **Out-of-Sample (OOS)** | 20-30% | Validate on unseen data | Operating effectiveness — did it actually work in practice? |
+| **Holdout / Final** | 10-20% | One-time confirmation before live | External audit — independent final check |
+
+Think of it like auditing a financial control: IS proves the strategy *should* work (design), OOS proves it *did* work on data it's never seen (operating effectiveness), and the holdout is the external auditor's independent verification.
 
 **Critical:** Once you examine OOS results, that data becomes in-sample. Never adjust parameters after looking at OOS.
 

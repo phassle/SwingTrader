@@ -83,6 +83,16 @@ Target: all correlations < 0.5.
 
 Track equity high-water mark daily; measure drawdown in real-time.
 
+### Position triage priority (when cutting positions)
+
+When heat or drawdown forces you to reduce, close positions in this order — borrowed from financial variance investigation methodology:
+
+1. **Largest absolute loss** — biggest drag on equity, cut first
+2. **Worst R-multiple** — position farthest from target relative to risk
+3. **Unexpected direction** — trade moving opposite to thesis (broken setup)
+4. **Regime mismatch** — position opened in regime A, now in regime C/D
+5. **Oldest stale trade** — no progress toward target in >7 days
+
 ## Rule 8: Partial exit strategy — 1/3 at 1R, 1/3 at 2R, 1/3 trailing
 
 ```
