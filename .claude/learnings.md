@@ -25,3 +25,15 @@ Erfarenheter och misstag från tidigare sessioner. Läs denna fil vid start av n
 **Vad hände:** Eval-mapparna namngavs med beskrivande namn (eval-1-signal-to-order, eval-2-getting-started) men aggregeringsskriptet förväntade sig troligen ett enklare mönster. Detta ledde till att benchmark-data inte plockades upp automatiskt.
 
 **Lärdom:** Vid skill-evaluering, använd det exakta mappnamnsformatet som eval-viewer-verktygen förväntar sig, eller verifiera kompatibilitet innan man kör. Konsistens i namngivning sparar felsökningstid.
+
+## 2026-03-29: Skills skrevs US-centriskt trots att projektet riktar sig mot Nasdaq Stockholm
+
+**Vad hände:** Tre nya trading skills (crash-bounce, momentum-flow, parabolic-panic) skrevs med US-marknadsantaganden genomgående: tider i ET istället för CET, prisfilter i USD, sektorindex som XLK/XLF istället för OMXS SX-index, och datakällor exklusivt för US-börser. Den kritiska granskningen avslöjade >15 specifika problem per skill.
+
+**Lärdom:** Innan man börjar skriva en skill, kontrollera projektets CLAUDE.md och README.md för målmarknad. Alla marknadsspecifika parametrar (tider, valutor, index, datakällor, haltsystem) måste anpassas till projektets primära marknad. Skriv med primärmarknaden först, US som referens/sekundär.
+
+## 2026-03-29: 100% eval pass rate ≠ inga problem — evals var för lätta
+
+**Vad hände:** Alla tre skills fick 100% pass rate i with-skill evaluering. Men en efterföljande kritisk granskning hittade allvarliga brister (inkonsistenta volymtrösklar, saknade formler, felaktiga tidszoner) som evalerna inte testade.
+
+**Lärdom:** Om en eval ger 100% pass rate, ifrågasätt om evalerna är tillräckligt svåra. Lägg till "adversarial" testfall som testar edge cases, inkonsekvenser och marknadsspecifika detaljer. En bra eval bör hitta minst ett problem.
