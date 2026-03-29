@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Crash-Bounce Scanner — Dashboard</title>
+<style>
+:root {
+  --bg:#0d1117;--s:#161b22;--s2:#1c2129;--brd:#30363d;
+  --t:#c9d1d9;--td:#8b949e;--acc:#58a6ff;
+  --g:#3fb950;--y:#d29922;--o:#db6d28;--r:#f85149;--p:#bc8cff;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;background:var(--bg);color:var(--t);height:100vh;display:flex;flex-direction:column;overflow:hidden}
+.header{padding:10px 20px;background:var(--s);border-bottom:1px solid var(--brd);display:flex;align-items:center;gap:16px;flex-shrink:0}
+.header h1{font-size:15px;font-weight:600}
+.header .meta{font-size:12px;color:var(--td);font-family:'SF Mono',Monaco,monospace;margin-left:auto}
+.main{display:flex;flex:1;overflow:hidden}
+.sidebar{width:300px;flex-shrink:0;background:var(--s);border-right:1px solid var(--brd);overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:12px}
+.content{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.content-scroll{flex:1;overflow-y:auto;padding:16px}
+.detail-panel{border-top:1px solid var(--brd);background:var(--s2);padding:16px;max-height:42%;overflow-y:auto}
+
+/* Stats */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
+.stat{background:var(--s);border:1px solid var(--brd);border-radius:8px;padding:10px 12px}
+.stat .label{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--td);margin-bottom:3px}
+.stat .val{font-size:22px;font-weight:700;font-family:'SF Mono',Monaco,monospace}
+.stat .sub{font-size:11px;color:var(--td);margin-top:2px}
+
+/* Sidebar filters */
+.ctrl label{display:block;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--td);margin-bottom:4px}
+.ctrl select,.ctrl input[type=range]{width:100%;background:var(--s2);color:var(--t);border:1px solid var(--brd);border-radius:6px;padding:5px 8px;font-size:12px}
+.ctrl input[type=range]{-webkit-appearance:none;appearance:none;height:5px;border:none;background:var(--brd);border-radius:3px;padding:0;cursor:pointer}
+.ctrl input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--acc);cursor:pointer}
+.range-val{font-family:'SF Mono',Monaco,monospace;font-size:11px;color:var(--acc);float:right;margin-top:-18px}
+.cb-row{display:flex;align-items:center;gap:6px;margin-bottom:4px;font-size:12px}
+.cb-row input{accent-color:var(--acc)}
+.divider{border-top:1px solid var(--brd);margin:4px 0}
+
+/* Scatter chart */
+.chart-area{position:relative;width:100%;height:220px;background:var(--s);border:1px solid var(--brd);border-radius:8px;margin-bottom:14px;overflow:hidden}
+.chart-area canvas{width:100%;height:100%}
+.chart-label{position:absolute;font-size:10px;color:var(--td);pointer-events:none}
+.chart-label.x{bottom:4px;left:50%;transform:translateX(-50%)}
+.chart-label.y{top:50%;left:6px;transform:rotate(-90deg) translateX(-50%);transform-origin:left center}
+
+/* Table */
+table{width:100%;border-collapse:collapse;font-family:'SF Mono',Monaco,monospace;font-size:12px}
+thead th{text-align:left;padding:6px 8px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--td);border-bottom:2px solid var(--brd);position:sticky;top:0;background:var(--bg);z-index:1;cursor:pointer;user-select:none;white-space:nowrap}
+thead th:hover{color:var(--acc)}
+thead th.num{text-align:right}
+tbody td{padding:5px 8px;border-bottom:1px solid var(--brd);white-space:nowrap}
+tbody td.num{text-align:right}
+tbody tr{transition:background .1s;cursor:pointer}
+tbody tr:hover{background:var(--s)}
+tbody tr.sel{background:var(--s2)}
+
+.tag{font-size:10px;padding:1px 7px;border-radius:3px;font-weight:600;display:inline-block}
+.tag-tp{background:rgba(63,185,80,.15);color:var(--g)}
+.tag-sl{background:rgba(248,81,73,.15);color:var(--r)}
+.tag-open{background:rgba(210,153,34,.1);color:var(--y)}
+.tag-both{background:rgba(188,140,255,.12);color:var(--p)}
+.pnl-pos{color:var(--g)}.pnl-neg{color:var(--r)}.pnl-flat{color:var(--td)}
+
+/* Detail */
+.det-title{font-size:15px;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:10px}
+.det-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin-bottom:10px}
+.det-card{background:var(--s);border:1px solid var(--brd);border-radius:6px;padding:8px 12px}
+.det-card .k{font-size:10px;text-transform:uppercase;letter-spacing:.4px;color:var(--td)}
+.det-card .v{font-size:16px;font-weight:700;font-family:'SF Mono',Monaco,monospace;margin-top:2px}
+.det-card .note{font-size:11px;color:var(--td);margin-top:2px}
+.bar-row{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.bar-label{font-size:11px;min-width:90px;color:var(--td)}
+.bar-bg{flex:1;height:8px;background:var(--brd);border-radius:4px;overflow:hidden;position:relative}
+.bar-fill{height:100%;border-radius:4px;position:absolute;top:0;left:0}
+.bar-val{font-size:11px;font-family:'SF Mono',Monaco,monospace;min-width:60px;text-align:right}
+
+/* Prompt */
+.prompt-area{flex-shrink:0;border-top:1px solid var(--brd);background:var(--s);padding:10px 16px}
+.prompt-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
+.prompt-hdr span{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--td)}
+.copy-btn{font-size:11px;padding:3px 10px;border-radius:5px;border:1px solid var(--brd);background:var(--s2);color:var(--t);cursor:pointer;transition:all .15s}
+.copy-btn:hover{border-color:var(--acc);color:var(--acc)}
+.copy-btn.copied{background:var(--g);color:#0d1117;border-color:var(--g)}
+#prompt{font-family:'SF Mono',Monaco,monospace;font-size:11px;color:var(--td);line-height:1.5;max-height:55px;overflow-y:auto}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>Crash-Bounce Scanner</h1>
+  <span class="meta" id="hdr-meta"></span>
+</div>
+<div class="main">
+  <div class="sidebar">
+    <div class="stats" id="stats"></div>
+    <div class="divider"></div>
+    <div class="ctrl">
+      <label>Min Drop % <span class="range-val" id="rv-drop">40</span></label>
+      <input type="range" id="f-drop" min="25" max="80" value="40" step="5" oninput="onCtrl()">
+    </div>
+    <div class="ctrl">
+      <label>Min Volume <span class="range-val" id="rv-vol">500k</span></label>
+      <input type="range" id="f-vol" min="0" max="5000" value="500" step="100" oninput="onCtrl()">
+    </div>
+    <div class="ctrl">
+      <label>Outcome Filter</label>
+      <select id="f-outcome" onchange="onCtrl()">
+        <option value="all">All</option>
+        <option value="tp">TP Hit (+3%)</option>
+        <option value="sl">SL Hit (-1.5%)</option>
+        <option value="won">Won (TP, no SL first)</option>
+        <option value="lost">Lost (SL hit)</option>
+        <option value="pending">Pending</option>
+      </select>
+    </div>
+    <div class="ctrl">
+      <label>Sort By</label>
+      <select id="f-sort" onchange="onCtrl()">
+        <option value="drop">Drop % (biggest first)</option>
+        <option value="bounce">Bounce % (best first)</option>
+        <option value="peak">Peak % (best first)</option>
+        <option value="date">Date (newest first)</option>
+        <option value="volume">Volume (highest first)</option>
+      </select>
+    </div>
+    <div class="divider"></div>
+    <div class="ctrl">
+      <label>Display</label>
+      <div class="cb-row"><input type="checkbox" id="f-chart" checked onchange="onCtrl()"><span>Scatter chart</span></div>
+    </div>
+    <div class="divider"></div>
+    <div style="font-size:11px;color:var(--td);line-height:1.5">
+      <strong style="color:var(--t)">Strategy rules:</strong><br>
+      TP: +3% from open<br>
+      SL: -1.5% from open<br>
+      Time stop: 15:30 ET<br>
+      Entry: 10:00-10:30 ET<br>
+      Skip: F(fraud) / B(bankruptcy)
+    </div>
+  </div>
+  <div class="content">
+    <div class="content-scroll" id="content"></div>
+    <div class="detail-panel" id="detail" style="display:none"></div>
+  </div>
+</div>
+<div class="prompt-area">
+  <div class="prompt-hdr">
+    <span>Generated Prompt</span>
+    <button class="copy-btn" id="copy-btn" onclick="copyPrompt()">Copy</button>
+  </div>
+  <div id="prompt"></div>
+</div>
+
+<script src="scans/crash-bounce/crash-data.js"></script>
+<script>
+const data = window.CRASH_DATA || {candidates:[]};
+let selected = null;
+let filtered = [];
+
+function cands(){ return data.candidates || []; }
+
+function onCtrl(){
+  selected = null;
+  render();
+}
+
+function applyFilters(){
+  const minDrop = +document.getElementById('f-drop').value;
+  const minVol = +document.getElementById('f-vol').value * 1000;
+  const outcome = document.getElementById('f-outcome').value;
+  const sort = document.getElementById('f-sort').value;
+
+  document.getElementById('rv-drop').textContent = minDrop;
+  const vk = +document.getElementById('f-vol').value;
+  document.getElementById('rv-vol').textContent = vk >= 1000 ? (vk/1000).toFixed(0)+'M' : vk+'k';
+
+  let f = cands().filter(c => {
+    if(c.drop_pct < minDrop) return false;
+    if(c.volume < minVol) return false;
+    if(outcome==='tp' && (!c.bounce || !c.bounce.tp_hit)) return false;
+    if(outcome==='sl' && (!c.bounce || !c.bounce.sl_hit)) return false;
+    if(outcome==='won' && (!c.bounce || !c.bounce.tp_hit)) return false;
+    if(outcome==='lost' && (!c.bounce || !c.bounce.sl_hit)) return false;
+    if(outcome==='pending' && c.bounce) return false;
+    return true;
+  });
+
+  const dir = -1;
+  f.sort((a,b) => {
+    switch(sort){
+      case 'drop': return (b.drop_pct - a.drop_pct);
+      case 'bounce': return ((b.bounce?.bounce_close_pct||0) - (a.bounce?.bounce_close_pct||0));
+      case 'peak': return ((b.bounce?.bounce_intraday_high_pct||0) - (a.bounce?.bounce_intraday_high_pct||0));
+      case 'date': return b.date.localeCompare(a.date);
+      case 'volume': return (b.volume - a.volume);
+    }
+    return 0;
+  });
+  filtered = f;
+  return f;
+}
+
+function renderStats(){
+  const all = cands();
+  const wb = all.filter(c=>c.bounce);
+  const tp = wb.filter(c=>c.bounce.tp_hit);
+  const sl = wb.filter(c=>c.bounce.sl_hit && !c.bounce.tp_hit);
+  const tpOnly = wb.filter(c=>c.bounce.tp_hit && !c.bounce.sl_hit);
+  const avgPeak = wb.length ? (wb.reduce((s,c)=>s+c.bounce.bounce_intraday_high_pct,0)/wb.length) : 0;
+  const avgClose = wb.length ? (wb.reduce((s,c)=>s+c.bounce.bounce_close_pct,0)/wb.length) : 0;
+  const wr = (tp.length+sl.length) > 0 ? Math.round(tp.length/(tp.length+sl.length)*100) : 0;
+
+  document.getElementById('stats').innerHTML = `
+    <div class="stat"><div class="label">Candidates</div><div class="val">${all.length}</div><div class="sub">${filtered.length} filtered</div></div>
+    <div class="stat"><div class="label">TP Hit Rate</div><div class="val" style="color:${wr>=50?'var(--g)':'var(--r)'}">${wr}%</div><div class="sub">${tp.length}/${tp.length+sl.length} resolved</div></div>
+    <div class="stat"><div class="label">Avg Peak</div><div class="val" style="color:var(--g)">+${avgPeak.toFixed(1)}%</div><div class="sub">intraday high</div></div>
+    <div class="stat"><div class="label">Avg Close</div><div class="val" style="color:${avgClose>=0?'var(--g)':'var(--r)'}"><span>${avgClose>=0?'+':''}${avgClose.toFixed(1)}%</span></div><div class="sub">next-day close</div></div>
+  `;
+  document.getElementById('hdr-meta').textContent =
+    `${data.scan_date?.slice(0,16).replace('T',' ')||''} | ${all.length} crashes scanned | Threshold: ${data.threshold||'40%'}`;
+}
+
+function renderChart(){
+  if(!document.getElementById('f-chart').checked) return '';
+  // Scatter: X = drop%, Y = bounce peak%
+  const wb = filtered.filter(c=>c.bounce);
+  if(!wb.length) return '';
+
+  const W=740, H=200, pad={t:15,r:15,b:30,l:50};
+  const pw=W-pad.l-pad.r, ph=H-pad.t-pad.b;
+  const maxDrop = Math.max(...wb.map(c=>c.drop_pct),50);
+  const minBounce = Math.min(...wb.map(c=>c.bounce.bounce_close_pct),-10);
+  const maxBounce = Math.max(...wb.map(c=>c.bounce.bounce_close_pct),20);
+  const rangeB = maxBounce - minBounce || 1;
+
+  let svg = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:100%">`;
+  // Grid
+  svg += `<rect x="${pad.l}" y="${pad.t}" width="${pw}" height="${ph}" fill="#0d1117" stroke="#30363d"/>`;
+  // Zero line
+  const zeroY = pad.t + ph - ((0 - minBounce)/rangeB)*ph;
+  svg += `<line x1="${pad.l}" y1="${zeroY}" x2="${W-pad.r}" y2="${zeroY}" stroke="#30363d" stroke-dasharray="4"/>`;
+  // Axes labels
+  svg += `<text x="${pad.l+pw/2}" y="${H-4}" fill="#8b949e" font-size="10" text-anchor="middle">Drop %</text>`;
+  svg += `<text x="12" y="${pad.t+ph/2}" fill="#8b949e" font-size="10" text-anchor="middle" transform="rotate(-90,12,${pad.t+ph/2})">Next-Day Close %</text>`;
+  // Ticks
+  for(let d=40;d<=maxDrop;d+=10){
+    const x=pad.l+(d/maxDrop)*pw;
+    svg+=`<text x="${x}" y="${H-16}" fill="#8b949e" font-size="9" text-anchor="middle">${d}%</text>`;
+    svg+=`<line x1="${x}" y1="${pad.t}" x2="${x}" y2="${H-pad.b}" stroke="#21262d"/>`;
+  }
+  for(let b=Math.ceil(minBounce/20)*20;b<=maxBounce;b+=20){
+    const y=pad.t+ph-((b-minBounce)/rangeB)*ph;
+    svg+=`<text x="${pad.l-4}" y="${y+3}" fill="#8b949e" font-size="9" text-anchor="end">${b>0?'+':''}${b}%</text>`;
+    if(b!==0) svg+=`<line x1="${pad.l}" y1="${y}" x2="${W-pad.r}" y2="${y}" stroke="#21262d"/>`;
+  }
+  // Points
+  wb.forEach(c=>{
+    const x=pad.l+(c.drop_pct/maxDrop)*pw;
+    const y=pad.t+ph-((c.bounce.bounce_close_pct-minBounce)/rangeB)*ph;
+    const col=c.bounce.bounce_close_pct>=3?'#3fb950':c.bounce.bounce_close_pct>=0?'#d29922':'#f85149';
+    const r=Math.max(4,Math.min(8,c.volume/5000000));
+    const sel=c.ticker===selected;
+    svg+=`<circle cx="${x}" cy="${y}" r="${sel?r+2:r}" fill="${col}" opacity="${sel?1:0.7}" stroke="${sel?'#fff':'none'}" stroke-width="2" data-ticker="${c.ticker}" data-date="${c.date}" style="cursor:pointer">
+      <title>${c.ticker} ${c.date}\nDrop: -${c.drop_pct}%\nBounce: ${c.bounce.bounce_close_pct>0?'+':''}${c.bounce.bounce_close_pct}%\nPeak: +${c.bounce.bounce_intraday_high_pct}%</title>
+    </circle>`;
+  });
+  svg+=`</svg>`;
+  return `<div class="chart-area" onclick="chartClick(event)">${svg}</div>`;
+}
+
+function chartClick(e){
+  const el=e.target.closest('circle');
+  if(!el)return;
+  selected=el.dataset.ticker===selected?null:el.dataset.ticker;
+  render();
+}
+
+function outcomeTag(c){
+  if(!c.bounce) return '<span class="tag tag-open">PENDING</span>';
+  if(c.bounce.tp_hit && !c.bounce.sl_hit) return '<span class="tag tag-tp">TP CLEAN</span>';
+  if(c.bounce.tp_hit && c.bounce.sl_hit) return '<span class="tag tag-both">TP+SL</span>';
+  if(c.bounce.sl_hit) return '<span class="tag tag-sl">STOPPED</span>';
+  return '<span class="tag tag-open">FLAT</span>';
+}
+
+function pnlClass(v){return v>0.5?'pnl-pos':v<-0.5?'pnl-neg':'pnl-flat'}
+
+function renderTable(){
+  let h = `<table><thead><tr>
+    <th>#</th><th>Date</th><th>Ticker</th><th class="num">Drop%</th>
+    <th class="num">Close</th><th class="num">Volume</th><th class="num">VolX</th>
+    <th class="num">Gap%</th><th class="num">Bounce%</th><th class="num">Peak%</th><th>Result</th>
+  </tr></thead><tbody>`;
+
+  filtered.forEach((c,i)=>{
+    const bp = c.bounce?.bounce_close_pct;
+    const pp = c.bounce?.bounce_intraday_high_pct;
+    const sel = c.ticker===selected && c.date===(filtered.find(x=>x.ticker===selected)?.date);
+    h+=`<tr class="${c.ticker===selected?'sel':''}" onclick="selectRow('${c.ticker}','${c.date}')">
+      <td class="num">${i+1}</td>
+      <td>${c.date}</td>
+      <td style="font-weight:600">${c.ticker}</td>
+      <td class="num" style="color:var(--r)">-${c.drop_pct.toFixed(1)}%</td>
+      <td class="num">$${c.close.toFixed(2)}</td>
+      <td class="num">${(c.volume/1e6).toFixed(1)}M</td>
+      <td class="num">${c.vol_ratio>0?c.vol_ratio.toFixed(0)+'x':'--'}</td>
+      <td class="num">${c.gap_down_pct!=null?(c.gap_down_pct>0?'+':'')+c.gap_down_pct.toFixed(0)+'%':'--'}</td>
+      <td class="num ${bp!=null?pnlClass(bp):''}">${bp!=null?(bp>0?'+':'')+bp.toFixed(1)+'%':'--'}</td>
+      <td class="num ${pp!=null?pnlClass(pp):''}">${pp!=null?'+'+pp.toFixed(1)+'%':'--'}</td>
+      <td>${outcomeTag(c)}</td>
+    </tr>`;
+  });
+  h+=`</tbody></table>`;
+  return h;
+}
+
+function selectRow(ticker,date){
+  selected = selected===ticker ? null : ticker;
+  render();
+}
+
+function renderDetail(){
+  const panel = document.getElementById('detail');
+  if(!selected){panel.style.display='none';return}
+  const c = filtered.find(x=>x.ticker===selected);
+  if(!c){panel.style.display='none';return}
+  panel.style.display='block';
+
+  const b = c.bounce;
+  const crashBar = Math.min(c.drop_pct, 100);
+
+  let bounceSection = '';
+  if(b){
+    bounceSection = `
+    <div class="det-grid">
+      <div class="det-card"><div class="k">Next Open</div><div class="v">$${b.next_open.toFixed(2)}</div><div class="note">Gap from crash close: ${((b.next_open-c.close)/c.close*100).toFixed(1)}%</div></div>
+      <div class="det-card"><div class="k">Next Close</div><div class="v ${pnlClass(b.bounce_close_pct)}">$${b.next_close.toFixed(2)}</div><div class="note">${b.bounce_close_pct>0?'+':''}${b.bounce_close_pct}% from crash close</div></div>
+      <div class="det-card"><div class="k">Intraday Peak</div><div class="v" style="color:var(--g)">$${b.next_high.toFixed(2)}</div><div class="note">+${b.bounce_intraday_high_pct.toFixed(1)}% from open</div></div>
+      <div class="det-card"><div class="k">Intraday Low</div><div class="v" style="color:var(--r)">$${b.next_low.toFixed(2)}</div><div class="note">${((b.next_low-b.next_open)/b.next_open*100).toFixed(1)}% from open</div></div>
+    </div>
+    <div style="margin-top:8px">
+      <div class="bar-row">
+        <span class="bar-label">TP (+3%)</span>
+        <div class="bar-bg"><div class="bar-fill" style="width:${Math.min(b.bounce_intraday_high_pct/3*100,100)}%;background:${b.tp_hit?'var(--g)':'var(--brd)'}"></div></div>
+        <span class="bar-val" style="color:${b.tp_hit?'var(--g)':'var(--td)'}">${b.tp_hit?'HIT':'MISS'} (+${b.bounce_intraday_high_pct.toFixed(1)}%)</span>
+      </div>
+      <div class="bar-row">
+        <span class="bar-label">SL (-1.5%)</span>
+        <div class="bar-bg"><div class="bar-fill" style="width:${b.sl_hit?100:0}%;background:${b.sl_hit?'var(--r)':'var(--brd)'}"></div></div>
+        <span class="bar-val" style="color:${b.sl_hit?'var(--r)':'var(--g)'}">${b.sl_hit?'TRIGGERED':'SAFE'}</span>
+      </div>
+    </div>`;
+  } else {
+    bounceSection = '<div style="color:var(--y);font-size:13px;padding:12px 0">No next-day data available (pending or halted)</div>';
+  }
+
+  panel.innerHTML = `
+    <div class="det-title">
+      <span style="font-size:17px">${c.ticker}</span>
+      <span style="color:var(--r);font-family:monospace">-${c.drop_pct.toFixed(1)}%</span>
+      ${outcomeTag(c)}
+      <span style="font-size:12px;color:var(--td)">${c.date}</span>
+    </div>
+    <div class="det-grid">
+      <div class="det-card"><div class="k">Crash Day</div><div class="v" style="color:var(--r)">-${c.drop_pct.toFixed(1)}%</div><div class="note">$${c.open.toFixed(2)} -> $${c.close.toFixed(2)}</div></div>
+      <div class="det-card"><div class="k">Volume</div><div class="v">${(c.volume/1e6).toFixed(1)}M</div><div class="note">${c.vol_ratio}x avg 20d</div></div>
+      <div class="det-card"><div class="k">Gap Down</div><div class="v">${c.gap_down_pct!=null?(c.gap_down_pct>0?'+':'')+c.gap_down_pct.toFixed(1)+'%':'N/A'}</div></div>
+      <div class="det-card"><div class="k">Day Range</div><div class="v">$${c.low.toFixed(2)} - $${c.high.toFixed(2)}</div></div>
+    </div>
+    <div style="margin:10px 0;font-size:12px;font-weight:600;color:var(--t)">Next-Day Bounce Analysis</div>
+    ${bounceSection}
+  `;
+}
+
+function updatePrompt(){
+  const el=document.getElementById('prompt');
+  const f=filtered;
+  const wb=f.filter(c=>c.bounce);
+  const tp=wb.filter(c=>c.bounce.tp_hit);
+  const sl=wb.filter(c=>c.bounce.sl_hit);
+
+  let p=`Crash-bounce scan: ${f.length} candidates with ≥${document.getElementById('f-drop').value}% intraday drops. `;
+  if(wb.length){
+    const wr=tp.length&&sl.length? Math.round(tp.length/(tp.length+sl.length)*100) : 0;
+    const avgP=wb.reduce((s,c)=>s+c.bounce.bounce_intraday_high_pct,0)/wb.length;
+    p+=`${tp.length}/${wb.length} hit +3% TP (${wr}% win rate). Avg intraday peak: +${avgP.toFixed(1)}%. `;
+  }
+  if(selected){
+    const c=filtered.find(x=>x.ticker===selected);
+    if(c){
+      p+=`\n\nDetail: ${c.ticker} dropped ${c.drop_pct.toFixed(1)}% on ${c.date} ($${c.open.toFixed(2)}->${c.close.toFixed(2)}, vol ${(c.volume/1e6).toFixed(1)}M). `;
+      if(c.bounce) p+=`Next day: ${c.bounce.bounce_close_pct>0?'+':''}${c.bounce.bounce_close_pct}% close, +${c.bounce.bounce_intraday_high_pct}% peak. ${c.bounce.tp_hit?'TP hit.':''} ${c.bounce.sl_hit?'SL triggered.':''}`;
+      p+=` Classify this drop and assess if the bounce pattern is tradeable.`;
+    }
+  }
+  el.textContent=p;
+}
+
+function copyPrompt(){
+  navigator.clipboard.writeText(document.getElementById('prompt').textContent).then(()=>{
+    const b=document.getElementById('copy-btn');
+    b.textContent='Copied!';b.classList.add('copied');
+    setTimeout(()=>{b.textContent='Copy';b.classList.remove('copied')},1500);
+  });
+}
+
+function render(){
+  applyFilters();
+  renderStats();
+  const content=document.getElementById('content');
+  content.innerHTML = renderChart() + renderTable();
+  renderDetail();
+  updatePrompt();
+}
+
+render();
+</script>
+</body>
+</html>
