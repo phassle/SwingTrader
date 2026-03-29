@@ -42,12 +42,19 @@ position_size: [shares]
 strategy: [playbook name]
 setup_type: [gap-fill, breakout, pullback, catalyst, reversal]
 market_regime: [strong-uptrend, uptrend, range, downtrend, strong-downtrend]
+signal_score: [0-20]
 exit_reason: [target-hit, stop-loss, breakeven, early-exit-reason]
 r_multiple: [profit/risk or loss/risk]
 emotional_state: [calm, confident, anxious, fearful, greedy, impulsive]
 mistakes: [list any deviations from plan]
 lessons: [key takeaway from this trade]
 ```
+
+### Journal Narrative Quality (write 2-3 sentences per trade)
+
+Good journal entries are **specific** (names the actual driver), **quantified** (SEK and R-multiple), **causal** (explains WHY not just WHAT), **forward-looking** (will this setup work again?), and **actionable** (what to change).
+
+Bad: "Lost money, stock went down." Good: "VOLV-B pullback entry at 265 stopped out at 258 (−1R). Entry was during regime C (choppy) where pullback setups have low hit rate. Next time: skip pullbacks unless regime is A or B."
 
 ---
 
@@ -75,14 +82,40 @@ lessons: [key takeaway from this trade]
 
 ## WEEKLY REVIEW CHECKLIST (Every Friday EOD)
 
-- [ ] Total P&L for week. How far from target?
+### P&L Decomposition (borrowed from variance analysis)
+
+Don't just look at total P&L — decompose it into drivers:
+
+```
+Weekly P&L Waterfall:
+  Starting equity:                    _____ SEK
+    [+/-] Breakout trades:            _____ SEK (N trades)
+    [+/-] Pullback trades:            _____ SEK (N trades)
+    [+/-] Mean reversion trades:      _____ SEK (N trades)
+    [-]   Commissions + slippage:     _____ SEK
+  Ending equity:                      _____ SEK
+
+Which setup type drove most profit/loss?
+Which regime were the losers in?
+```
+
+### Review Questions
+
+- [ ] Total P&L for week. Decomposed by setup type and regime.
 - [ ] Win rate % this week. Average R:R on winners vs losers.
 - [ ] How many trades deviated from playbook? (Should be <5%.)
 - [ ] Emotional violations: Revenge trades? FOMO entries? Oversize positions? (Record count.)
 - [ ] What was the best trade this week? Why? What was the worst? Why?
 - [ ] Did I follow hard limits? Any breaches?
 - [ ] Did I follow daily routine? Any skips?
-- [ ] One thing to improve next week.
+
+### Retrospective (do after every week, not just bad ones)
+
+1. What went well this week that I should keep doing?
+2. What took longer than expected and why?
+3. Were there any surprise outcomes I should have caught earlier?
+4. What can I systematize or automate for next week?
+5. One specific improvement commitment for next week.
 
 ---
 
@@ -135,6 +168,19 @@ Phase 3: REDUCED SIZE (trades 21-50)
 Phase 4: NORMAL SIZE (trades 51-100)
   - Full position size. Track breach rate.
   - At trade 100: if breach rate < 5%, recovery complete.
+```
+
+### Remediation Record (fill out during Phase 1)
+
+Think of this like an auditor investigating a control failure — you need root cause, not just symptoms:
+
+```
+Breach date:        [YYYY-MM-DD]
+Breach type:        [moved-stop | revenge-trade | skipped-checklist | ...]
+Root cause:         [WHY did it happen? Emotion? Fatigue? Unclear rule?]
+P&L impact:         [SEK lost beyond planned risk]
+Remediation plan:   [Specific change — e.g., "add 15-min cooldown after loss"]
+Validation:         [How will I know the fix works? E.g., "0 breaches in Phase 2-3"]
 ```
 
 ## THE 100-TRADE HORIZON
