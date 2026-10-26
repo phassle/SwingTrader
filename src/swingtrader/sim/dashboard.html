@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Paper-Trading Sandbox</title>
+<style>
+:root {
+  --bg: #f4f5f7; --card: #ffffff; --fg: #1b1f24; --muted: #5f6873; --line: #e1e4e8;
+  --acc: #2563eb; --up: #15803d; --down: #c2410c; --hl: #eef3ff; --warn: #a16207;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0e1115; --card: #161a20; --fg: #e5e8ec; --muted: #929ba6; --line: #262c34;
+    --acc: #6b95ff; --up: #4ade80; --down: #fb923c; --hl: #1d2533; --warn: #facc15;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 14px/1.45 system-ui, sans-serif; }
+header { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: center; padding: 12px 16px;
+  border-bottom: 1px solid var(--line); background: var(--card); position: sticky; top: 0; z-index: 2; }
+header h1 { font-size: 16px; margin: 0; }
+.pill { font-size: 12px; padding: 2px 8px; border-radius: 99px; border: 1px solid var(--line); color: var(--muted); }
+.stat b { font-variant-numeric: tabular-nums; }
+.spacer { flex: 1; }
+button, select, input { font: inherit; color: var(--fg); background: var(--bg); border: 1px solid var(--line);
+  border-radius: 6px; padding: 6px 10px; }
+button { cursor: pointer; }
+button.primary { background: var(--acc); color: #fff; border-color: var(--acc); }
+button.buy { background: #15803d; color: #fff; border-color: #15803d; }
+button.sell { background: #c2410c; color: #fff; border-color: #c2410c; }
+a { color: var(--acc); }
+main { display: grid; grid-template-columns: 340px 1fr; gap: 16px; padding: 16px; }
+@media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px; min-width: 0; }
+.card h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 0 0 10px; }
+.col { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.quotes { max-height: calc(100vh - 110px); overflow-y: auto; padding: 0; }
+.quotes h2 { padding: 14px 14px 0; }
+table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+th, td { text-align: right; padding: 5px 8px; white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; }
+th { font-weight: 500; color: var(--muted); font-size: 12px; border-bottom: 1px solid var(--line); }
+tbody tr { border-bottom: 1px solid var(--line); }
+.quotes tbody tr { cursor: pointer; }
+.quotes tbody tr:hover, .quotes tbody tr.sel { background: var(--hl); }
+.up { color: var(--up); } .down { color: var(--down); }
+.flash-up { animation: fu .6s; } .flash-down { animation: fd .6s; }
+@keyframes fu { from { background: color-mix(in srgb, var(--up) 14%, transparent); } }
+@keyframes fd { from { background: color-mix(in srgb, var(--down) 14%, transparent); } }
+.chart { width: 100%; height: 240px; display: block; }
+.grid2 { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; }
+@media (max-width: 1200px) { .grid2 { grid-template-columns: 1fr; } }
+.form { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.form input[type=number] { width: 110px; }
+.kpis { display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 10px; }
+.kpi span { display: block; font-size: 12px; color: var(--muted); }
+.kpi b { font-size: 20px; font-variant-numeric: tabular-nums; }
+.msg { font-size: 13px; min-height: 20px; margin-top: 8px; }
+.msg.err { color: var(--down); }
+.events { font-size: 13px; max-height: 220px; overflow-y: auto; }
+.events div { padding: 3px 0; border-bottom: 1px solid var(--line); }
+.muted { color: var(--muted); }
+.scroll { overflow-x: auto; }
+.empty { color: var(--muted); font-size: 13px; padding: 6px 0; }
+code { font-size: 12px; background: var(--bg); padding: 1px 5px; border-radius: 4px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Paper-Trading Sandbox</h1>
+  <span class="pill">Simulerade kurser</span>
+  <span class="stat">Tick <b id="tick">0</b></span>
+  <span class="stat">Index <b id="index">-</b></span>
+  <span class="stat">Regim <b id="regime">-</b></span>
+  <span class="spacer"></span>
+  <button id="pause">Pausa</button>
+  <select id="speed" title="Sekunder per tick">
+    <option value="0.25">4x</option><option value="0.5">2x</option>
+    <option value="1" selected>1 s/tick</option><option value="3">3 s/tick</option>
+  </select>
+  <button id="newsession" title="Nollställ dagens förändring">Ny session</button>
+  <a href="/logout"><button>Logga ut</button></a>
+</header>
+
+<main>
+  <section class="card quotes">
+    <h2>Kurser</h2>
+    <table>
+      <thead><tr><th>Ticker</th><th>Senast</th><th>%</th><th></th></tr></thead>
+      <tbody id="quotes"></tbody>
+    </table>
+  </section>
+
+  <div class="col">
+    <div class="grid2">
+      <section class="card">
+        <h2 id="chart-title">Diagram</h2>
+        <svg id="chart" class="chart" preserveAspectRatio="none"></svg>
+        <div class="form" style="margin-top:10px">
+          <span class="muted">Simulera:</span>
+          <button data-shock="-15">-15 %</button>
+          <button data-shock="-5">-5 %</button>
+          <button data-shock="5">+5 %</button>
+          <button data-shock="15">+15 %</button>
+          <button data-shock="-4" data-all="1">Börsras -4 %</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Order</h2>
+        <div class="form">
+          <label>Konto <select id="acct"></select></label>
+          <button id="newacct" title="Skapa nytt konto">+</button>
+        </div>
+        <div class="form" style="margin-top:8px">
+          <input id="o-ticker" placeholder="Ticker" style="width:130px">
+          <input id="o-qty" type="number" min="1" value="10" title="Antal">
+          <select id="o-type"><option value="market">Market</option><option value="limit">Limit</option><option value="stop">Stop</option></select>
+          <input id="o-price" type="number" step="0.01" placeholder="Pris" title="Limit- eller stoppris">
+        </div>
+        <div class="form" style="margin-top:8px">
+          <button class="buy" data-side="buy">Köp</button>
+          <button class="sell" data-side="sell">Sälj</button>
+          <span class="muted" id="o-quote"></span>
+        </div>
+        <div class="msg" id="o-msg"></div>
+      </section>
+    </div>
+
+    <section class="card">
+      <h2 id="acct-title">Konto</h2>
+      <div class="kpis" id="kpis"></div>
+      <svg id="equity" class="chart" style="height:120px" preserveAspectRatio="none"></svg>
+    </section>
+
+    <div class="grid2">
+      <section class="card scroll">
+        <h2>Innehav</h2>
+        <table><thead><tr><th>Ticker</th><th>Antal</th><th>GAV</th><th>Kurs</th><th>Värde</th><th>Orealiserat</th></tr></thead>
+        <tbody id="positions"></tbody></table>
+        <h2 style="margin-top:16px">Öppna order</h2>
+        <table><thead><tr><th>#</th><th>Ticker</th><th>Sida</th><th>Antal</th><th>Typ</th><th>Pris</th><th></th></tr></thead>
+        <tbody id="orders"></tbody></table>
+      </section>
+      <section class="card">
+        <h2>Händelser</h2>
+        <div class="events" id="events"></div>
+      </section>
+    </div>
+
+    <section class="card scroll">
+      <h2>Affärer</h2>
+      <table><thead><tr><th>Tid</th><th>Ticker</th><th>Sida</th><th>Antal</th><th>Pris</th><th>Courtage</th><th>Realiserat</th><th style="text-align:left">Notering</th></tr></thead>
+      <tbody id="trades"></tbody></table>
+    </section>
+
+    <section class="card">
+      <h2>Extern agent</h2>
+      <p class="muted" style="margin:0">Instruktioner: <code>GET /api/guide</code>. Autentisera med
+      <code>Authorization: Bearer &lt;lösenord&gt;</code> och välj konto med <code>X-Account: &lt;namn&gt;</code>.
+      Schema: <a href="/docs" target="_blank">/docs</a>.</p>
+    </section>
+  </div>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const fmt = (n, d = 2) => n == null ? "-" : Number(n).toLocaleString("sv-SE", { minimumFractionDigits: d, maximumFractionDigits: d });
+const cls = (n) => n > 0 ? "up" : n < 0 ? "down" : "";
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const store = { get: (k) => { try { return localStorage.getItem(k); } catch { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch {} } };
+let S = null, selected = null, account = store.get("sim-acct") || "agent";
+const lastPrice = {};
+
+async function api(path, opts = {}) {
+  const r = await fetch(path, {
+    ...opts,
+    headers: { "Content-Type": "application/json", "X-Account": account, ...(opts.headers || {}) },
+  });
+  if (r.status === 401) { location.href = "/login"; throw new Error("auth"); }
+  const body = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(body.detail || r.statusText);
+  return body;
+}
+
+function line(svg, values, color) {
+  const w = svg.clientWidth || 300, h = svg.clientHeight || 100;
+  svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
+  if (values.length < 2) { svg.innerHTML = ""; return; }
+  const min = Math.min(...values), max = Math.max(...values), pad = (max - min) * 0.08 || 1;
+  const x = (i) => (i / (values.length - 1)) * w;
+  const y = (v) => h - ((v - min + pad) / (max - min + 2 * pad)) * h;
+  const d = values.map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join("");
+  const labels = svg.dataset.labels ? `
+    <text x="4" y="12" font-size="11" fill="var(--muted)">${fmt(max)}</text>
+    <text x="4" y="${h - 4}" font-size="11" fill="var(--muted)">${fmt(min)}</text>` : "";
+  svg.innerHTML = `<path d="${d}" fill="none" stroke="${color}" stroke-width="1.6" vector-effect="non-scaling-stroke"/>${labels}`;
+}
+
+function spark(values) {
+  if (!values || values.length < 2) return "";
+  const min = Math.min(...values), max = Math.max(...values), r = max - min || 1;
+  const pts = values.map((v, i) => `${(i / (values.length - 1) * 60).toFixed(1)},${(18 - (v - min) / r * 16).toFixed(1)}`).join(" ");
+  const c = values.at(-1) >= values[0] ? "var(--up)" : "var(--down)";
+  return `<svg width="60" height="20"><polyline points="${pts}" fill="none" stroke="${c}" stroke-width="1.2"/></svg>`;
+}
+
+function renderQuotes() {
+  const rows = S.quotes.map((q) => {
+    const prev = lastPrice[q.ticker];
+    const flash = prev == null || prev === q.last ? "" : q.last > prev ? "flash-up" : "flash-down";
+    lastPrice[q.ticker] = q.last;
+    return `<tr data-t="${q.ticker}" class="${q.ticker === selected ? "sel" : ""}">
+      <td>${q.ticker.replace(".ST", "")}</td><td class="${flash}">${fmt(q.last)}</td>
+      <td class="${cls(q.change_pct)}">${fmt(q.change_pct)}</td><td>${spark(S.sparks[q.ticker])}</td></tr>`;
+  });
+  $("quotes").innerHTML = rows.join("");
+}
+
+async function renderChart() {
+  if (!selected) return;
+  const q = S.quotes.find((x) => x.ticker === selected);
+  $("chart-title").textContent = `${selected}  ${fmt(q.last)}  (${fmt(q.change_pct)} %)`;
+  $("o-quote").textContent = `Köp ${fmt(q.ask)} / Sälj ${fmt(q.bid)}`;
+  const h = await api(`/api/market/${encodeURIComponent(selected)}/history?n=400`);
+  const vals = h.history.map((p) => p[1]);
+  line($("chart"), vals, vals.at(-1) >= vals[0] ? "var(--up)" : "var(--down)");
+}
+
+function renderAccount() {
+  const names = Object.keys(S.accounts);
+  if (!names.includes(account)) names.unshift(account);
+  $("acct").innerHTML = names.map((n) => `<option ${n === account ? "selected" : ""}>${esc(n)}</option>`).join("");
+  const a = S.accounts[account];
+  $("acct-title").textContent = `Konto: ${account}`;
+  if (!a) {
+    $("kpis").innerHTML = `<div class="empty">Kontot skapas vid första order eller API-anrop.</div>`;
+    ["positions", "orders", "trades"].forEach((id) => $(id).innerHTML = "");
+    $("equity").innerHTML = "";
+    return;
+  }
+  $("kpis").innerHTML = [
+    ["Eget kapital", fmt(a.equity), ""], ["Avkastning", fmt(a.total_return_pct) + " %", cls(a.total_return_pct)],
+    ["Kassa", fmt(a.cash), ""], ["Köpkraft", fmt(a.buying_power), ""],
+    ["Realiserat", fmt(a.realized_pnl), cls(a.realized_pnl)], ["Courtage", fmt(a.commission_paid), ""],
+  ].map(([k, v, c]) => `<div class="kpi"><span>${k}</span><b class="${c}">${v}</b></div>`).join("");
+  line($("equity"), a.equity_curve.map((p) => p[1]), "var(--acc)");
+  $("positions").innerHTML = a.positions.length ? a.positions.map((p) => `<tr>
+    <td>${p.ticker}</td><td>${p.quantity}</td><td>${fmt(p.avg_cost)}</td><td>${fmt(p.price)}</td>
+    <td>${fmt(p.market_value)}</td><td class="${cls(p.unrealized_pnl)}">${fmt(p.unrealized_pnl)} (${fmt(p.unrealized_pct)} %)</td></tr>`).join("")
+    : `<tr><td colspan="6" class="empty">Inga innehav</td></tr>`;
+  $("orders").innerHTML = a.open_orders.length ? a.open_orders.map((o) => `<tr>
+    <td>${o.id}</td><td>${o.ticker}</td><td class="${o.side === "buy" ? "up" : "down"}">${o.side}</td>
+    <td>${o.quantity}</td><td>${o.type}</td><td>${fmt(o.limit_price ?? o.stop_price)}</td>
+    <td><button data-cancel="${o.id}">Makulera</button></td></tr>`).join("")
+    : `<tr><td colspan="7" class="empty">Inga öppna order</td></tr>`;
+  $("trades").innerHTML = a.trades.length ? a.trades.slice().reverse().map((t) => `<tr>
+    <td>${new Date(t.time).toLocaleTimeString("sv-SE")}</td><td>${t.ticker}</td>
+    <td class="${t.side === "buy" ? "up" : "down"}">${t.side}</td><td>${t.quantity}</td><td>${fmt(t.price)}</td>
+    <td>${fmt(t.commission)}</td><td class="${cls(t.realized_pnl)}">${t.realized_pnl == null ? "" : fmt(t.realized_pnl)}</td>
+    <td style="text-align:left" class="muted">${esc(t.note)}</td></tr>`).join("")
+    : `<tr><td colspan="8" class="empty">Inga affärer än</td></tr>`;
+}
+
+function renderEvents() {
+  const label = { news: "Nyhet", shock: "Chock", regime: "Regimskifte", session_open: "Ny session" };
+  $("events").innerHTML = S.events.length ? S.events.map((e) => {
+    const what = e.kind === "regime" ? e.regime : `${e.ticker ?? ""} ${e.move_pct != null ? fmt(e.move_pct) + " %" : ""}`;
+    return `<div><span class="muted">#${e.tick}</span> ${label[e.kind] || e.kind}: <span class="${cls(e.move_pct)}">${esc(what)}</span></div>`;
+  }).join("") : `<div class="empty">Inga händelser än</div>`;
+}
+
+async function refresh() {
+  try {
+    S = await api("/api/state");
+    $("tick").textContent = S.market.tick;
+    $("index").textContent = fmt(S.market.index);
+    $("regime").textContent = S.market.regime;
+    $("pause").textContent = S.sim.paused ? "Starta" : "Pausa";
+    const speed = $("speed");
+    if (document.activeElement !== speed) {
+      const v = String(S.sim.tick_seconds);
+      if (![...speed.options].some((o) => o.value === v)) speed.add(new Option(`${v} s/tick`, v));
+      speed.value = v;
+    }
+    if (!selected) { selected = S.quotes[0]?.ticker; $("o-ticker").value = selected; }
+    renderQuotes(); renderAccount(); renderEvents(); await renderChart();
+  } catch (e) { if (e.message !== "auth") console.error(e); }
+}
+
+$("quotes").addEventListener("click", (e) => {
+  const tr = e.target.closest("tr"); if (!tr) return;
+  selected = tr.dataset.t; $("o-ticker").value = selected; refresh();
+});
+document.querySelectorAll("[data-side]").forEach((b) => b.addEventListener("click", async () => {
+  const type = $("o-type").value, price = parseFloat($("o-price").value) || null;
+  const body = { ticker: $("o-ticker").value.trim(), side: b.dataset.side, quantity: parseInt($("o-qty").value, 10), type, note: "manuell (dashboard)" };
+  if (type === "limit") body.limit_price = price;
+  if (type === "stop") body.stop_price = price;
+  try {
+    const o = await api("/api/orders", { method: "POST", body: JSON.stringify(body) });
+    $("o-msg").className = "msg";
+    $("o-msg").textContent = o.status === "filled" ? `Order #${o.id} fylld @ ${fmt(o.fill_price)}` : `Order #${o.id} lagd (${o.status})`;
+  } catch (e) { $("o-msg").className = "msg err"; $("o-msg").textContent = e.message; }
+  refresh();
+}));
+$("orders").addEventListener("click", async (e) => {
+  const id = e.target.dataset.cancel; if (!id) return;
+  await api(`/api/orders/${id}`, { method: "DELETE" }).catch((err) => alert(err.message));
+  refresh();
+});
+document.querySelectorAll("[data-shock]").forEach((b) => b.addEventListener("click", async () => {
+  await api("/api/control", { method: "POST", body: JSON.stringify({ shock_pct: parseFloat(b.dataset.shock), shock_ticker: b.dataset.all ? null : selected }) });
+  refresh();
+}));
+$("pause").addEventListener("click", async () => { await api("/api/control", { method: "POST", body: JSON.stringify({ paused: !S.sim.paused }) }); refresh(); });
+$("speed").addEventListener("change", async (e) => { await api("/api/control", { method: "POST", body: JSON.stringify({ tick_seconds: parseFloat(e.target.value) }) }); });
+$("newsession").addEventListener("click", async () => { await api("/api/control", { method: "POST", body: JSON.stringify({ new_session: true }) }); refresh(); });
+$("acct").addEventListener("change", (e) => { account = e.target.value; store.set("sim-acct", account); refresh(); });
+$("newacct").addEventListener("click", () => {
+  const n = prompt("Kontonamn (samma som X-Account)"); if (!n) return;
+  account = n.trim(); store.set("sim-acct", account); refresh();
+});
+
+refresh();
+setInterval(refresh, 1000);
+</script>
+</body>
+</html>

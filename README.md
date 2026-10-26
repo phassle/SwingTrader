@@ -86,6 +86,31 @@ Open `swingtrader-scanner-playground.html` in a browser to see:
 
 The dashboard reads from `scans/scan-data.js` which is auto-generated after every scan and evaluation.
 
+## Paper-Trading Sandbox (for AI agents)
+
+A simulated market where an AI agent can practise buying and selling the Large Cap
+universe with fake money. Prices are generated (one-factor random walk with regime
+switches and random news jumps), never real. Includes a browser dashboard and a
+password-protected JSON API for external agents.
+
+```bash
+pip install fastapi uvicorn structlog pandas
+SIM_PASSWORD='your-password' PYTHONPATH=src python -m swingtrader.sim --host 0.0.0.0 --port 8000
+```
+
+- Dashboard: `http://<host>:8000/` (log in with the password)
+- Agent instructions: `GET /api/guide` (public), OpenAPI docs at `/docs`
+- Auth: `Authorization: Bearer <password>` or `X-API-Key: <password>`
+- Accounts: `X-Account: <agent-name>` header. Each name gets its own 100 000 SEK account
+- Orders: market, limit and stop. Long only, 0.069 % commission (min 1 SEK)
+- Controls: pause, speed, price shocks and a market crash button, to test agent behaviour
+
+Optional env vars: `SIM_TICK_SECONDS` (default 1.0), `SIM_SEED` (reproducible prices).
+State lives in memory and resets on restart. To reach the sandbox from an agent on another
+machine, run it on a host with a public address or put a tunnel in front of it
+(for example `cloudflared tunnel --url http://localhost:8000`). Use HTTPS when exposed,
+since the password travels in a header.
+
 ## What the Scanner Does
 
 The scanner runs a four-step pipeline every time you execute it:

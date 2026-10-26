@@ -37,3 +37,9 @@ Erfarenheter och misstag från tidigare sessioner. Läs denna fil vid start av n
 **Vad hände:** Alla tre skills fick 100% pass rate i with-skill evaluering. Men en efterföljande kritisk granskning hittade allvarliga brister (inkonsistenta volymtrösklar, saknade formler, felaktiga tidszoner) som evalerna inte testade.
 
 **Lärdom:** Om en eval ger 100% pass rate, ifrågasätt om evalerna är tillräckligt svåra. Lägg till "adversarial" testfall som testar edge cases, inkonsekvenser och marknadsspecifika detaljer. En bra eval bör hitta minst ett problem.
+
+## 2026-10-26: FastAPI dependency aliases broke under `from __future__ import annotations`
+
+**What happened:** The sandbox server defined `AccountName = Annotated[str, Depends(...)]` inside the app factory. With `from __future__ import annotations` at the top of the module, FastAPI could not resolve the string annotation and silently treated `name` as a required query parameter, so `POST /api/orders` returned 422.
+
+**Learning:** In FastAPI modules that define `Annotated[..., Depends(...)]` aliases inside a function, do not use `from __future__ import annotations`. Test every route through `TestClient`, since the failure only shows at request time.
