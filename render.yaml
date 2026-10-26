@@ -1,0 +1,16 @@
+# Render Blueprint for the paper-trading sandbox (swingtrader.sim).
+# Render prompts for SIM_PASSWORD when the Blueprint is created, so it is never stored here.
+services:
+  - type: web
+    name: swingtrader-sim
+    runtime: python
+    plan: free
+    branch: feature/paper-trading-sim
+    buildCommand: pip install fastapi uvicorn structlog
+    startCommand: PYTHONPATH=src python -m swingtrader.sim --host 0.0.0.0
+    healthCheckPath: /api/guide
+    envVars:
+      - key: SIM_PASSWORD
+        sync: false
+      - key: PYTHON_VERSION
+        value: 3.12.7

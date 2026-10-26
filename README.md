@@ -106,7 +106,8 @@ SIM_PASSWORD='your-password' PYTHONPATH=src python -m swingtrader.sim --host 0.0
 - Controls: pause, speed, price shocks and a market crash button, to test agent behaviour
 
 Optional env vars: `SIM_TICK_SECONDS` (default 1.0), `SIM_SEED` (reproducible prices).
-State lives in memory and resets on restart. To reach the sandbox from an agent on another
+Deploy to Render: New > Blueprint, pick this repo and the branch holding `render.yaml`,
+then enter `SIM_PASSWORD` when prompted. State lives in memory and resets on restart. To reach the sandbox from an agent on another
 machine, run it on a host with a public address or put a tunnel in front of it
 (for example `cloudflared tunnel --url http://localhost:8000`). Use HTTPS when exposed,
 since the password travels in a header.
